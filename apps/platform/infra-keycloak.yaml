@@ -6,7 +6,7 @@ metadata:
 spec:
   project: platform
   source:
-    repoURL: https://github.com/TourinhoM/deploy-keycloak.git
+    repoURL: https://github.com/TourinhoM/platform-auth.git
     targetRevision: main
     path: overlays/lab
   destination:
