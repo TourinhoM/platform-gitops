@@ -8,4 +8,5 @@ resources:
   - system-app.yaml
   - monitoring-app.yaml
   - platform-app.yaml
+  - security-app.yaml
   # apps-app.yaml — descomentar quando app-catalog, app-reviews e app-bff existirem no GitHub

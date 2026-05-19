@@ -1,31 +1,22 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: security-dependency-track-config
+  name: security-app
   namespace: argocd
   annotations:
-    argocd.argoproj.io/sync-wave: "0"
+    argocd.argoproj.io/sync-wave: "1"
 spec:
-  project: system
-
+  project: default
   source:
-    repoURL: https://github.com/TourinhoM/deploy-dtrack
+    repoURL: https://github.com/TourinhoM/platform-security
     targetRevision: main
-    path: base
-
+    path: apps
   destination:
     server: https://kubernetes.default.svc
-    namespace: dtrack
-
+    namespace: argocd
   syncPolicy:
     automated:
       prune: true
       selfHeal: true
     syncOptions:
       - CreateNamespace=true
-    retry:
-      limit: 5
-      backoff:
-        duration: 10s
-        factor: 2
-        maxDuration: 2m
