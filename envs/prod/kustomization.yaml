@@ -1,0 +1,11 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# TODO (prod):
+# - Criar namespaces e recursos específicos de produção
+# - Ajustar quotas/limits e policies
+# - Apontar para infra de produção (paths em envs/prod/infra/*)
+
+resources:
+  - namespaces/infra.yaml
+

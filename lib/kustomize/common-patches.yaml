@@ -1,0 +1,7 @@
+# TODO: arquivo placeholder para patches comuns (kustomize patches).
+#
+# Plano:
+# - Adicionar patches para padronizar resources requests/limits
+# - Adicionar patches para padronizar securityContext
+# - Adicionar patches para padronizar tolerations/nodeSelector, se necessário
+

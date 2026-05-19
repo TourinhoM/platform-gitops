@@ -1,0 +1,11 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: infra
+
+# TODO (Postgres):
+# - Decidir se vai usar Helm (bitnami/postgresql) ou manifests próprios
+# - Se usar Helm, migrar este diretório para Chart + values e ajustar o Application
+# - Se usar manifests, colocar aqui StatefulSet/Service/PVC/Secret (preferir External Secrets)
+
+resources: []
+

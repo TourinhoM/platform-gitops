@@ -1,0 +1,26 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: infra-keycloak-dev
+  namespace: argocd
+spec:
+  project: platform
+  source:
+    repoURL: https://github.com/TourinhoM/deploy-keycloak.git
+    targetRevision: main
+    path: overlays/lab
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: keycloak
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+
+# TODO (este arquivo):
+# - Trocar repoURL
+# - Se Keycloak for instalado por Helm, migrar para `source.helm`
+# - Ajustar namespaces (ex.: separar "identity")
+

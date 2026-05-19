@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: argocd
+  labels:
+    app.kubernetes.io/part-of: argocd
+    # TODO: adicionar labels de política (ex.: pod-security) se você usa.
+

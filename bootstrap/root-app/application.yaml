@@ -1,0 +1,27 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: root-app
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/TourinhoM/platform-gitops
+    targetRevision: main
+    path: apps
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: argocd
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+
+# TODO (este arquivo):
+# - Trocar repoURL (SSH/HTTPS do seu git)
+# - Ajustar targetRevision (main/master/tag)
+# - Ajustar se você quer auto-sync do root (recomendado) ou manual
+# - Se você usa múltiplos clusters, trocar destination para apontar para o cluster correto
+

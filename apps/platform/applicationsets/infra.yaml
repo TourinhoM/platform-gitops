@@ -1,0 +1,39 @@
+# TODO: ApplicationSet é opcional.
+# Use se você quer gerar Applications por ambiente/pasta automaticamente.
+#
+# Plano:
+# - Trocar repoURL
+# - Habilitar listagem de diretórios em `envs/*/infra/*`
+# - Padronizar namespaces e syncPolicy
+
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: infra
+  namespace: argocd
+spec:
+  generators:
+    - git:
+        repoURL: CHANGE_ME_REPO_URL
+        revision: main
+        directories:
+          - path: envs/dev/infra/*
+  template:
+    metadata:
+      name: "infra-{{path.basename}}-dev"
+    spec:
+      project: platform
+      source:
+        repoURL: CHANGE_ME_REPO_URL
+        targetRevision: main
+        path: "{{path}}"
+      destination:
+        server: https://kubernetes.default.svc
+        namespace: infra
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+        syncOptions:
+          - CreateNamespace=true
+

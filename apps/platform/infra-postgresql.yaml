@@ -1,0 +1,25 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: infra-postgresql-dev
+  namespace: argocd
+spec:
+  project: platform
+  source:
+    repoURL: https://github.com/TourinhoM/deploy-postgresql.git
+    targetRevision: main
+    path: k8s/overlays/dev
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: infra
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+
+# TODO (este arquivo):
+# - Quando houver ambiente prod, criar outro Application para `k8s/overlays/prod`
+# - Substituir segredo placeholder do repo por mecanismo seguro (SOPS/SealedSecrets/ExternalSecrets)
+

@@ -1,0 +1,39 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: security-cert-manager-config
+  namespace: argocd
+  annotations:
+    # Wave 1 — depende dos CRDs do chart (wave 0) estarem prontos.
+    # Retry generoso porque CRDs podem demorar pra registrar; Argo
+    # repete ate Issuer/Certificate ficarem applyable.
+    argocd.argoproj.io/sync-wave: "1"
+spec:
+  project: system
+
+  source:
+    repoURL: https://github.com/TourinhoM/deploy-cert-manager
+    targetRevision: main
+    path: .
+
+  destination:
+    server: https://kubernetes.default.svc
+    # ClusterIssuer e cluster-scoped; o `lab-ca` Certificate vive em
+    # `cert-manager` ns. Workload Certificates declaram namespace
+    # proprio no metadata, Argo respeita.
+    namespace: cert-manager
+
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true
+      - SkipDryRunOnMissingResource=true
+    retry:
+      limit: 10
+      backoff:
+        duration: 10s
+        factor: 2
+        maxDuration: 2m

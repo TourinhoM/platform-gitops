@@ -1,0 +1,17 @@
+# TODO: Este arquivo existe para você versionar values do Helm Chart do Argo CD,
+# caso escolha instalar/atualizar Argo CD via Helm (recomendado).
+#
+# Plano:
+# - Definir domínio/Ingress (ou manter ClusterIP)
+# - Definir RBAC e SSO (Keycloak/OIDC) se você usar
+# - Definir repos e credenciais (preferir External Secrets)
+# - Definir resources requests/limits
+#
+# Exemplo (placeholders, não aplicado automaticamente aqui):
+#
+# server:
+#   ingress:
+#     enabled: true
+#     hosts:
+#       - argocd.local
+

@@ -1,0 +1,12 @@
+.DS_Store
+*.swp
+*.swo
+.idea/
+.vscode/
+
+# Kubernetes/Argo: arquivos locais
+*.secrets.yaml
+*.secret.yaml
+*.key
+*.pem
+

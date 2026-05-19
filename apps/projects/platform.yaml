@@ -1,0 +1,23 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: platform
+  namespace: argocd
+spec:
+  description: Serviços de plataforma (auth, data, backstage)
+  sourceRepos:
+    - https://github.com/TourinhoM/platform-auth        # era deploy-keycloak
+    - https://github.com/TourinhoM/platform-data        # era deploy-postgresql
+    - https://github.com/TourinhoM/platform-backstage   # futuro
+    - https://github.com/keycloak/keycloak-k8s-resources
+  destinations:
+    - namespace: keycloak
+      server: https://kubernetes.default.svc
+    - namespace: platform-data
+      server: https://kubernetes.default.svc
+    - namespace: backstage
+      server: https://kubernetes.default.svc
+  clusterResourceWhitelist:
+    - group: "*"
+      kind: "*"
+

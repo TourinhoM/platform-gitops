@@ -1,0 +1,80 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: security-trivy-operator
+  namespace: argocd
+  annotations:
+    # Wave 0 = chart + CRDs primeiro; PrometheusRule do
+    # deploy-trivy-operator vem em wave 1.
+    argocd.argoproj.io/sync-wave: "0"
+spec:
+  project: system
+
+  source:
+    repoURL: https://aquasecurity.github.io/helm-charts/
+    chart: trivy-operator
+    targetRevision: 0.30.0
+    helm:
+      values: |
+        # Scanners habilitados — cobertura focada, sem ruido excessivo
+        # do cluster compliance / infra assessment (ver ARCHITECTURE
+        # do deploy-trivy-operator pra rationale).
+        operator:
+          vulnerabilityScannerEnabled: true
+          exposedSecretScannerEnabled: true
+          configAuditScannerEnabled: true
+          rbacAssessmentScannerEnabled: true
+          infraAssessmentScannerEnabled: false
+          clusterComplianceEnabled: false
+
+          # Limites pra evitar saturar WSL single-node
+          scanJobsConcurrentLimit: 2
+          scanJobsRetryDelay: 30s
+
+          # Namespaces que NAO devem ser escaneados:
+          #   kube-system: imagens da distro k3s, fora do escopo
+          #   cert-manager: imagens Jetstack upstream
+          #   trivy-system: meta (escanear o scanner geraria loop)
+          excludeNamespaces: "kube-system,cert-manager,trivy-system"
+
+          # Resources do controller no lab
+          replicas: 1
+
+        # Settings passados pro Trivy CLI dentro dos scan Jobs
+        trivy:
+          # Foca em CVEs acionaveis (que tem fix upstream)
+          ignoreUnfixed: true
+
+          # Niveis reportados (alem do filtro do PrometheusRule abaixo)
+          severity: "HIGH,CRITICAL"
+
+          # Source de DB (default OCI registry). resourceTimeout do
+          # primeiro pull pode demorar em rede ruim
+          timeout: "10m0s"
+
+        # ServiceMonitor pra kube-prometheus-stack scrapar metrics
+        serviceMonitor:
+          enabled: true
+          labels:
+            release: monitoring
+
+        # Resources conservadores
+        resources:
+          requests:
+            cpu: 50m
+            memory: 128Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: trivy-system
+
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true

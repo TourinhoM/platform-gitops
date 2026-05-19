@@ -1,0 +1,61 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: security-dependency-track
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+spec:
+  project: system
+
+  source:
+    repoURL: https://dependencytrack.github.io/helm-charts
+    chart: dependency-track
+    targetRevision: 0.46.0
+    helm:
+      values: |
+        apiServer:
+          persistentVolume:
+            enabled: true
+            size: 5Gi
+          resources:
+            requests:
+              cpu: 500m
+              memory: 1500Mi
+            limits:
+              cpu: "2"
+              memory: 6Gi
+          extraEnv:
+            - name: ALPINE_DATABASE_MODE
+              value: external
+            - name: ALPINE_DATABASE_URL
+              value: "jdbc:postgresql://postgresql.infra.svc.cluster.local:5432/dtrack"
+            - name: ALPINE_DATABASE_DRIVER
+              value: org.postgresql.Driver
+            - name: ALPINE_DATABASE_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: dtrack-db-credentials
+                  key: username
+            - name: ALPINE_DATABASE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: dtrack-db-credentials
+                  key: password
+
+        frontend:
+          apiBaseUrl: "https://dtrack.local"
+
+        ingress:
+          enabled: false
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: dtrack
+
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

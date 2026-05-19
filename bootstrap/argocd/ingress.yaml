@@ -1,0 +1,42 @@
+# TODO: se você não expõe a UI do Argo CD, pode remover este arquivo do kustomization.
+#
+# ATENÇÃO:
+# - O Argo CD por padrão expõe `argocd-server` com TLS interno.
+# - Dependendo do Ingress Controller, você pode precisar de anotações específicas.
+#
+# Este Ingress está propositalmente "placeholder" para você preencher.
+
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: argocd-server
+  namespace: argocd
+  annotations:
+    # Expor tanto em HTTP quanto HTTPS no Traefik.
+    traefik.ingress.kubernetes.io/router.entrypoints: web,websecure
+    # Backend do Argo CD deve ser HTTP quando server.insecure=true.
+    traefik.ingress.kubernetes.io/service.serversscheme: http
+spec:
+  ingressClassName: traefik
+  tls:
+    - hosts:
+        - argocd.local
+      secretName: keycloak-tls
+
+  rules:
+    - host: argocd.local
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: argocd-server
+                port:
+                  number: 80
+  # TODO: adicionar TLS (recomendado)
+  # tls:
+  #   - hosts:
+  #       - argocd.local
+  #     secretName: argocd-tls
+

@@ -1,0 +1,20 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: monitoring
+  namespace: argocd
+spec:
+  description: Stack de observabilidade (Prometheus, Grafana, Alertmanager, Loki, Alloy) e dashboards
+  sourceRepos:
+    - https://prometheus-community.github.io/helm-charts
+    - https://grafana.github.io/helm-charts
+    - https://github.com/TourinhoM/platform-observe      # era deploy-stack-monitor + deploy-loki + deploy-tempo
+    - https://github.com/TourinhoM/platform-gitops
+  destinations:
+    - namespace: monitoring
+      server: https://kubernetes.default.svc
+    - namespace: kube-system
+      server: https://kubernetes.default.svc
+  clusterResourceWhitelist:
+    - group: "*"
+      kind: "*"

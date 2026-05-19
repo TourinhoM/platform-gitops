@@ -1,0 +1,25 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: apps
+  namespace: argocd
+spec:
+  description: Apps de produto (app-catalog, app-reviews, app-bff)
+  sourceRepos:
+    - https://github.com/TourinhoM/app-catalog.git
+    - https://github.com/TourinhoM/app-reviews.git
+    - https://github.com/TourinhoM/app-bff.git
+    - https://github.com/TourinhoM/platform-app-base.git
+  destinations:
+    - namespace: app-catalog
+      server: https://kubernetes.default.svc
+    - namespace: app-reviews
+      server: https://kubernetes.default.svc
+    - namespace: app-bff
+      server: https://kubernetes.default.svc
+  namespaceResourceWhitelist:
+    - group: "*"
+      kind: "*"
+  clusterResourceWhitelist:
+    - group: argoproj.io
+      kind: Application
