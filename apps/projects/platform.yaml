@@ -13,6 +13,8 @@ spec:
   destinations:
     - namespace: keycloak
       server: https://kubernetes.default.svc
+    - namespace: infra          # migrar → platform-data quando o repo for migrado
+      server: https://kubernetes.default.svc
     - namespace: platform-data
       server: https://kubernetes.default.svc
     - namespace: backstage
