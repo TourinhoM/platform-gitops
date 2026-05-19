@@ -12,7 +12,7 @@ spec:
   project: system
 
   source:
-    repoURL: https://github.com/TourinhoM/deploy-cert-manager
+    repoURL: https://github.com/TourinhoM/platform-network
     targetRevision: main
     path: .
 

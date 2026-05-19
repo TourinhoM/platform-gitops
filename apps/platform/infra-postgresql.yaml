@@ -6,7 +6,7 @@ metadata:
 spec:
   project: platform
   source:
-    repoURL: https://github.com/TourinhoM/deploy-postgresql.git
+    repoURL: https://github.com/TourinhoM/platform-data.git
     targetRevision: main
     path: k8s/overlays/dev
   destination:
