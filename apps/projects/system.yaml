@@ -9,7 +9,8 @@ spec:
     - https://github.com/TourinhoM/platform-gitops
     - https://github.com/TourinhoM/platform-network      # era deploy-cert-manager
     - https://github.com/TourinhoM/platform-security     # era deploy-dtrack + deploy-trivy-operator
-    - https://github.com/TourinhoM/platform-crossplane   # futuro
+    - https://github.com/TourinhoM/platform-crossplane
+    - https://charts.crossplane.io/stable
     - https://charts.external-secrets.io
     - https://charts.jetstack.io
     - https://aquasecurity.github.io/helm-charts/
@@ -27,6 +28,8 @@ spec:
     - namespace: trivy-system
       server: https://kubernetes.default.svc
     - namespace: dtrack
+      server: https://kubernetes.default.svc
+    - namespace: crossplane-system
       server: https://kubernetes.default.svc
   clusterResourceWhitelist:
     - group: "*"
