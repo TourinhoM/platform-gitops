@@ -17,6 +17,7 @@ spec:
     - https://aquasecurity.github.io/helm-charts/
     - https://github.com/keycloak/keycloak-k8s-resources
     - https://dependencytrack.github.io/helm-charts
+    - https://helm.releases.hashicorp.com
   destinations:
     - namespace: argocd
       server: https://kubernetes.default.svc
@@ -31,6 +32,8 @@ spec:
     - namespace: dtrack
       server: https://kubernetes.default.svc
     - namespace: crossplane-system
+      server: https://kubernetes.default.svc
+    - namespace: vault
       server: https://kubernetes.default.svc
   clusterResourceWhitelist:
     - group: "*"
