@@ -70,6 +70,12 @@ spec:
           lokiCanary:
             enabled: false
 
+        chunksCache:
+          enabled: false
+
+        resultsCache:
+          enabled: false
+
         test:
           enabled: false
 
