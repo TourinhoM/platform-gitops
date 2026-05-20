@@ -10,6 +10,7 @@ spec:
     - https://github.com/TourinhoM/platform-network      # era deploy-cert-manager
     - https://github.com/TourinhoM/platform-security     # era deploy-dtrack + deploy-trivy-operator
     - https://github.com/TourinhoM/platform-crossplane
+    - https://github.com/TourinhoM/platform-apis
     - https://charts.crossplane.io/stable
     - https://charts.external-secrets.io
     - https://charts.jetstack.io
