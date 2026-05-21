@@ -15,91 +15,72 @@ Repositório GitOps para gerenciar **Argo CD** e os **workloads** do cluster via
 2. Aplicar uma vez o root app: `bootstrap/root-app/application.yaml`
 3. A partir daí, o Argo CD reconcilia `apps/` e tudo que eles apontarem em `envs/`
 
-## Pré-requisito: setup no Bitwarden Secrets Manager
+## Pré-requisito: HashiCorp Vault
 
-Antes de rodar o onboarding, prepare a conta do Bitwarden. Tudo é feito no
-[Web Vault](https://vault.bitwarden.com/) (plano free serve).
+O cluster usa HashiCorp Vault self-hosted (namespace `vault`, gerenciado por
+`platform-security`) como backend de secrets. O ESO autentica via Kubernetes auth
+— sem token fixo após o bootstrap inicial.
 
-1. **Organization** — em *Settings → New organization*, cria (ou usa uma existente).
-2. **Habilitar Secrets Manager** — no menu lateral, abre *Secrets Manager*. Na
-   primeira vez, ativa para essa organization.
-3. **Project** — em *Secrets Manager → Projects*, cria o project (lab usa `homelab`).
-4. **Secrets** — em *Secrets*, cria com estes nomes (associando ao project `homelab`):
-   - `postgres-superuser-password`
-   - `keycloak-admin-password`
-5. **Machine account** — em *Machine accounts → New*, cria um (ex.: `eso-homelab`).
-   Em *Projects*, dá acesso de leitura ao `homelab`. Em *Access tokens → New*,
-   gera um token, **copia agora** (não dá pra ver de novo).
-6. **IDs** — copia o `organizationID` (UUID na URL ou em *Settings*) e o
-   `projectID` (URL do project). Edita
-   `cluster-config/external-secrets/clustersecretstore-bitwarden-homelab.yaml`
-   trocando `organizationID` e `projectID` pelos seus.
+### Bootstrap (uma vez por cluster)
 
-Com o access token em mãos e o ClusterSecretStore apontando pros seus IDs,
-o onboarding abaixo finaliza o resto.
+1. **Inicializar o Vault** (após o pod `security-vault-0` subir):
+
+   ```bash
+   kubectl exec -n vault security-vault-0 -- vault operator init \
+     -key-shares=1 -key-threshold=1 -format=json > ~/vault-init.json
+   ```
+
+   Guarda `~/vault-init.json` em lugar seguro (contém unseal key e root token).
+
+2. **Desselar o Vault:**
+
+   ```bash
+   UNSEAL_KEY=$(cat ~/vault-init.json | python3 -c \
+     "import sys,json; print(json.load(sys.stdin)['unseal_keys_b64'][0])")
+   kubectl exec -n vault security-vault-0 -- vault operator unseal $UNSEAL_KEY
+   ```
+
+3. **Criar o token de bootstrap** (escopo limitado, expira em 2h):
+
+   ```bash
+   ROOT_TOKEN=$(cat ~/vault-init.json | python3 -c \
+     "import sys,json; print(json.load(sys.stdin)['root_token'])")
+
+   BOOTSTRAP_TOKEN=$(kubectl exec -n vault security-vault-0 -- \
+     vault token create -policy=root -ttl=2h -field=token \
+     -address=http://127.0.0.1:8200 <<< "" 2>/dev/null || \
+     kubectl exec -n vault security-vault-0 -- env VAULT_TOKEN=$ROOT_TOKEN \
+     vault token create -policy=root -ttl=2h -field=token)
+
+   kubectl create secret generic vault-bootstrap-token \
+     -n vault --from-literal=token=$BOOTSTRAP_TOKEN
+   ```
+
+4. **Aguardar o Job `vault-bootstrap`** (gerenciado pelo ArgoCD) completar:
+
+   ```bash
+   kubectl wait job/vault-bootstrap -n vault --for=condition=complete --timeout=120s
+   ```
+
+   O Job configura Kubernetes auth, policies (eso-read, crossplane-write) e
+   roles, depois revoga o token de bootstrap automaticamente.
+
+Validar:
+
+```bash
+kubectl get job vault-bootstrap -n vault   # COMPLETIONS: 1/1
+```
 
 ## Quickstart (onboarding completo)
-
-Script único que faz Argo CD → root-app → ESO → Bitwarden em um só passo.
-Idempotente; pede o access token do Bitwarden em runtime.
-
-```bash
-bash scripts/onboarding.sh
-```
-
-O que ele executa, em ordem:
-
-1. `kubectl apply -k bootstrap/argocd`
-2. Espera `argocd-server` ficar Ready
-3. `kubectl apply -f bootstrap/root-app/application.yaml`
-4. Espera o namespace `external-secrets` e o controller do ESO
-5. Pede o **access token** do machine account (Bitwarden Secrets Manager) e cria o Secret `bitwarden-access-token`
-6. Roda `scripts/bootstrap-bitwarden-sdk-tls.sh` (cert self-signed do sidecar)
-7. Espera o `ClusterSecretStore bitwarden-homelab` virar Ready
-
-Para reescrever o token depois:
-
-```bash
-FORCE_REWRITE_TOKEN=1 bash scripts/onboarding.sh
-```
-
-Apps individuais que precisam de TLS no próprio Ingress trazem seu script
-(ex.: `deploy-keycloak/scripts/bootstrap-tls.sh` gera o `keycloak-tls`).
-
-## Bootstrap manual (passo a passo)
-
-Se preferir rodar à mão em vez do script:
 
 ```bash
 kubectl apply -k bootstrap/argocd
 kubectl apply -f bootstrap/root-app/application.yaml
 ```
 
-Depois, dois segredos precisam ser criados **fora do Git** (chicken-and-egg):
-
-1. **Access token** do machine account no Bitwarden Secrets Manager:
-
-   ```bash
-   sudo k3s kubectl -n external-secrets create secret generic bitwarden-access-token \
-     --from-literal=token='<COLE_O_ACCESS_TOKEN>'
-   ```
-
-2. **Certificado TLS self-signed** para o `bitwarden-sdk-server`:
-
-   ```bash
-   bash scripts/bootstrap-bitwarden-sdk-tls.sh
-   ```
-
-   O script gera um cert válido por 10 anos com SAN cobrindo o DNS interno
-   `bitwarden-sdk-server.external-secrets.svc.cluster.local` e cria/atualiza o
-   Secret `bitwarden-tls-certs` (chaves: `tls.crt`, `tls.key`, `ca.crt`).
-
-Validar:
-
-```bash
-sudo k3s kubectl get clustersecretstore bitwarden-homelab \
-  -o jsonpath='{.status.conditions}'   # type=Ready, status=True
-```
+Após o ArgoCD sincronizar, siga o **Bootstrap** acima para inicializar o Vault.
+A partir daí o cluster é GitOps puro — qualquer novo ExternalSecret vai para
+o Vault via `platform-security` e é materializado pelo ESO automaticamente.
 
 ## Lint / validação CI
 

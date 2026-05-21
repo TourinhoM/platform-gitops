@@ -127,37 +127,33 @@ Keycloak via `additionalOptions[tracing-endpoint]` no `Keycloak` CR
 
 ---
 
-## External Secrets — Bitwarden Secrets Manager
+## External Secrets — HashiCorp Vault
 
 ```mermaid
 flowchart LR
-    BW[("Bitwarden Secrets Manager<br/>(SaaS)")]
+    V[("HashiCorp Vault\n(self-hosted · namespace vault)")]
 
     subgraph cluster[Cluster k3s]
-        SDK["bitwarden-sdk-server<br/>(sidecar HTTPS)"]
         ESO[external-secrets controller]
-        CSS[ClusterSecretStore<br/>bitwarden-homelab]
-        ES[ExternalSecret<br/>per-app]
-        K8sSecret[Secret k8s<br/>materializado]
+        CSS[ClusterSecretStore\nvault-homelab]
+        ES[ExternalSecret\nper-app]
+        K8sSecret[Secret k8s\nmaterializado]
+        Job["Job vault-bootstrap\n(GitOps · one-shot)"]
+        BToken["Secret vault-bootstrap-token\n(criado manualmente 1x)"]
 
         ES --> CSS
-        CSS -- "consulta" --> SDK
-        SDK -- "API REST + access token" --> BW
+        CSS -- "Kubernetes auth\n(ServiceAccount token)" --> V
         ESO -- "reconcilia" --> ES
         ES --> K8sSecret
+        Job -- "configura auth + policies + roles" --> V
+        Job -. "lê" .-> BToken
     end
-
-    Op[Operador] -- "1x no bootstrap" --> Token["Secret bitwarden-access-token<br/>(machine account token)"]
-    Op -- "1x no bootstrap" --> TLS["Secret bitwarden-tls-certs<br/>(self-signed pro sidecar SDK)"]
-    CSS -. "auth.secretRef" .-> Token
-    CSS -. "caProvider" .-> TLS
 ```
 
-Os 2 Secrets em laranja-escuro (`bitwarden-access-token`,
-`bitwarden-tls-certs`) **não** podem ficar no Git (token vazaria;
-cert é gerado por host). São criados pelo `scripts/onboarding.sh` antes
-do ClusterSecretStore virar Ready. A partir daí, qualquer
-ExternalSecret novo (em outro repo GitOps) é GitOps puro.
+O `vault-bootstrap-token` é o único Secret criado manualmente (uma vez).
+O Job `vault-bootstrap` lê esse token, configura o Vault via CLI e
+revoga o token ao final. A partir daí, ESO e Crossplane autenticam
+via Kubernetes auth (ServiceAccount) — sem token fixo em nenhum lugar.
 
 ---
 
@@ -200,24 +196,25 @@ seus próprios manifests pode reiniciar o controller no meio do sync.
 Mitigação: `selfHeal: true` + manifests pinados por SHA do release
 upstream (`argo-cd/v2.11.7/manifests/install.yaml`).
 
-### External Secrets + Bitwarden Secrets Manager
+### External Secrets + HashiCorp Vault
 
-**Escolha:** ESO + ClusterSecretStore apontando pra Bitwarden Secrets
-Manager (SaaS). Vault externo é a fonte de verdade; cluster materializa
-Secrets sob demanda.
+**Escolha:** ESO + ClusterSecretStore apontando para HashiCorp Vault
+self-hosted (namespace `vault`). Vault é a fonte de verdade; cluster
+materializa Secrets sob demanda via Kubernetes auth.
 
-**Alternativa:** SealedSecrets (criptografar e commitar no Git) ou SOPS
-(criptografar com KMS/age e commitar).
+**Alternativa:** SealedSecrets (criptografar e commitar no Git), SOPS
+(criptografar com KMS/age e commitar), ou Bitwarden Secrets Manager
+(SaaS, era a escolha anterior).
 
-**Por quê:** vault externo não exige chave comitada nem cerimônia de
-re-encrypt no key rotation. Bitwarden free tier serve pro escopo
-homelab. Em produção, mudaria provider (AWS Secrets Manager,
-HashiCorp Vault) sem mudar arquitetura — `provider:` do
-ClusterSecretStore.
+**Por quê:** Vault self-hosted fecha o ciclo completo da plataforma —
+Crossplane (`provider-vault`) pode **escrever** secrets no Vault
+(ex: senha gerada pelo AppDatabase), ESO lê e materializa no cluster.
+Bitwarden é excelente gerenciador de senhas pessoal, mas não suporta
+escrita programática de forma madura no ecossistema Crossplane.
 
-**Custo:** chicken-and-egg de bootstrap — `bitwarden-access-token` e
-TLS cert do sidecar SDK precisam existir antes do ESO funcionar, então
-não dá pra serem GitOps. `scripts/onboarding.sh` resolve idempotente.
+**Custo:** chicken-and-egg de bootstrap — `vault operator init` e
+`vault-bootstrap-token` precisam existir antes do Job de configuração
+rodar. Um comando manual uma única vez; a partir daí tudo é GitOps.
 
 ### Memory limit do `argocd-application-controller`: 1Gi (default era 512Mi)
 
@@ -266,12 +263,10 @@ Helm que silenciosamente troca defaults.
 
 ### Hoje, dentro do escopo atual
 
-- **Bootstrap não-GitOps de 2 segredos.** `bitwarden-access-token` e
-  `bitwarden-tls-certs` precisam ser criados via `kubectl` antes do ESO
-  virar Ready — caso contrário, ClusterSecretStore não materializa
-  outros Secrets. `scripts/onboarding.sh` torna idempotente, mas
-  recriar o cluster exige rerodar o script (não é puro `kubectl apply
-  -k bootstrap/`).
+- **Bootstrap não-GitOps de 1 secret.** `vault-bootstrap-token` precisa
+  ser criado via `kubectl` após o `vault operator init` manual. A partir
+  daí o Job `vault-bootstrap` (GitOps) configura tudo. Recriar o cluster
+  exige repetir o `vault operator init` e criar o secret novamente.
 - **ApplicationSet em `apps/applicationsets/infra.yaml` desabilitado.**
   `repoURL: CHANGE_ME_REPO_URL` é placeholder. Generator git/directories
   está pronto pra ativar (`envs/dev/infra/*` → 1 Application por dir),
