@@ -33,7 +33,13 @@ for i in $(seq 1 60); do
   sleep 5
 done
 [[ -z "${VAULT_POD:-}" ]] && { echo "Pod do Vault não encontrado. Abortando." >&2; exit 1; }
-$KUBECTL wait pod/"$VAULT_POD" -n vault --for=condition=Ready --timeout=3m
+# Espera Running (não Ready) — readiness probe só passa após init+unseal
+for i in $(seq 1 60); do
+  STATUS=$($KUBECTL get pod "$VAULT_POD" -n vault -o jsonpath='{.status.phase}' 2>/dev/null || true)
+  [[ "$STATUS" == "Running" ]] && break
+  sleep 5
+done
+[[ "${STATUS:-}" != "Running" ]] && { echo "Pod do Vault não ficou Running. Abortando." >&2; exit 1; }
 info "Pod: $VAULT_POD"
 
 # ---------- 2. Init ----------
