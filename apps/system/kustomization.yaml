@@ -5,8 +5,6 @@ resources:
   - argocd-config.yaml
   - external-secrets.yaml
   - external-secrets-config.yaml
-  - security-cert-manager.yaml
-  - security-cert-manager-config.yaml
   - security-trivy-operator.yaml
   - security-dependency-track.yaml
   - keycloak-operator.yaml
