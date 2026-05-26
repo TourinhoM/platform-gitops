@@ -1,14 +1,13 @@
 #!/usr/bin/env bash
 # Onboarding end-to-end do cluster: Argo CD + root app + ESO + Vault.
 #
-# Pré-requisito: Vault já inicializado e com o auth method kubernetes configurado.
-#
 # Etapas:
 #   1. Instala Argo CD (bootstrap/argocd)
 #   2. Espera o argocd-server ficar Ready
 #   3. Aplica o root-app (que sincroniza tudo em apps/)
 #   4. Espera o namespace external-secrets e o controller do ESO
-#   5. Espera o ClusterSecretStore vault-homelab ficar Ready
+#   5. Bootstrap do Vault (init, unseal, policies, secrets) — chama bootstrap-vault.sh
+#   6. Espera o ClusterSecretStore vault-homelab ficar Ready
 set -euo pipefail
 
 KUBECTL="${KUBECTL:-sudo k3s kubectl}"
@@ -45,8 +44,13 @@ for i in $(seq 1 60); do
 done
 $KUBECTL -n external-secrets rollout status deploy/external-secrets --timeout=5m
 
-# ---------- 5. ClusterSecretStore vault-homelab ----------
-step "5/5 Aguardando ClusterSecretStore vault-homelab"
+# ---------- 5. Bootstrap do Vault ----------
+step "5/6 Bootstrap do Vault"
+KUBECTL="$KUBECTL" PLATFORM_SECURITY_PATH="$(cd "$REPO_ROOT/../platform-security" 2>/dev/null && pwd || echo "")" \
+  bash "$SCRIPT_DIR/bootstrap-vault.sh"
+
+# ---------- 6. ClusterSecretStore vault-homelab ----------
+step "6/6 Aguardando ClusterSecretStore vault-homelab"
 for i in $(seq 1 60); do
   if $KUBECTL get clustersecretstore vault-homelab >/dev/null 2>&1; then break; fi
   sleep 5
@@ -66,10 +70,12 @@ done
 if [[ "${STATUS:-}" != "True" ]]; then
   warn "ClusterSecretStore vault-homelab ainda não está Ready. Verifique:"
   warn "  $KUBECTL get clustersecretstore vault-homelab -o jsonpath='{.status.conditions}'"
-  warn "Certifique-se de que o Vault está unsealed e o auth method kubernetes está configurado."
   exit 1
 fi
 
 step "Onboarding concluído"
 info "Apps individuais que precisam de TLS de Ingress trazem seu próprio script"
 info "(ex.: deploy-keycloak/scripts/bootstrap-tls.sh)."
+info ""
+info "Pendente após Dependency Track subir:"
+info "  vault kv patch secret/cluster/dtrack api_key=<valor>"
