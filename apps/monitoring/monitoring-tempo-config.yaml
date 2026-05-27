@@ -9,9 +9,9 @@ spec:
   project: monitoring
 
   source:
-    repoURL: https://github.com/TourinhoM/deploy-tempo
+    repoURL: https://github.com/TourinhoM/platform-observe.git
     targetRevision: main
-    path: .
+    path: tempo
 
   destination:
     server: https://kubernetes.default.svc

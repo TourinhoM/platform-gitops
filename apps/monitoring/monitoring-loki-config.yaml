@@ -9,9 +9,9 @@ spec:
   project: monitoring
 
   source:
-    repoURL: https://github.com/TourinhoM/deploy-loki
+    repoURL: https://github.com/TourinhoM/platform-observe.git
     targetRevision: main
-    path: .
+    path: loki
 
   destination:
     server: https://kubernetes.default.svc
