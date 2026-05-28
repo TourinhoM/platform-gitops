@@ -14,3 +14,6 @@ resources:
   - crossplane-app.yaml
   - platform-apis-app.yaml
   - apps-app.yaml
+  - infra-keycloak.yaml
+  - security-dtrack.yaml
+  - security-dtrack-config.yaml
