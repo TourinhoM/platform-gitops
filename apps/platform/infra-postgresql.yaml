@@ -20,6 +20,7 @@ spec:
       selfHeal: true
     syncOptions:
       - CreateNamespace=true
+      - SkipDryRunOnMissingResource=true
 
 # TODO (este arquivo):
 # - Quando houver ambiente prod, criar outro Application para `k8s/overlays/prod`
