@@ -96,98 +96,10 @@ else
   export VAULT_ROOT_TOKEN="$ROOT_TOKEN"
 fi
 
-# ---------- 6. Secrets de aplicação ----------
-step "6/6 Criando secrets de aplicação no Vault"
-info "Os valores serão lidos interativamente. A entrada não é ecoada."
-
-# Solicita root token se não veio do init
-if [[ -z "${VAULT_ROOT_TOKEN:-}" ]]; then
-  ask "Root token do Vault"
-  read -rs VAULT_ROOT_TOKEN
-  echo
-fi
-
-export VAULT_ADDR="http://localhost:8200"
-$KUBECTL port-forward -n vault svc/security-vault 8200:8200 &
-PF_PID=$!
-trap 'kill $PF_PID 2>/dev/null || true' EXIT
-sleep 2
-
-export VAULT_TOKEN="$VAULT_ROOT_TOKEN"
-
-read_secret() {
-  ask "$1"
-  read -rs VAL
-  echo
-  echo "$VAL"
-}
-
-read_multiline_secret() {
-  askml "$1"
-  VAL=$(cat)
-  echo "$VAL"
-}
-
-# --- cluster/argocd ---
-info ""
-info "--- cluster/argocd (GitHub App do ArgoCD) ---"
-ARGOCD_APP_ID=$(read_secret "github_app_id")
-ARGOCD_INSTALL_ID=$(read_secret "github_app_installation_id")
-info "  Cole a chave privada PEM (ENTER + Ctrl-D para finalizar):"
-ARGOCD_PRIVATE_KEY=$(read_multiline_secret "github_app_private_key (PEM)")
-
-vault kv put secret/cluster/argocd \
-  github_app_id="$ARGOCD_APP_ID" \
-  github_app_installation_id="$ARGOCD_INSTALL_ID" \
-  github_app_private_key="$ARGOCD_PRIVATE_KEY"
-info "secret/cluster/argocd criado."
-
-# --- cluster/grafana ---
-info ""
-info "--- cluster/grafana ---"
-GRAFANA_ADMIN_PW=$(read_secret "admin_password")
-GRAFANA_DB_PW=$(read_secret "db_password")
-
-vault kv put secret/cluster/grafana \
-  admin_password="$GRAFANA_ADMIN_PW" \
-  db_password="$GRAFANA_DB_PW"
-info "secret/cluster/grafana criado."
-
-# --- cluster/postgresql ---
-info ""
-info "--- cluster/postgresql ---"
-PG_SUPERUSER_PW=$(read_secret "superuser_password")
-
-vault kv put secret/cluster/postgresql \
-  superuser_password="$PG_SUPERUSER_PW"
-info "secret/cluster/postgresql criado."
-
-# --- cluster/keycloak ---
-info ""
-info "--- cluster/keycloak ---"
-KC_ADMIN_PW=$(read_secret "admin_password")
-
-vault kv put secret/cluster/keycloak \
-  admin_password="$KC_ADMIN_PW"
-info "secret/cluster/keycloak criado."
-
-# --- cluster/dtrack ---
-info ""
-info "--- cluster/dtrack ---"
-DTRACK_DB_PW=$(read_secret "db_password")
-warn "O api_key do Dependency Track é gerado pela aplicação após o primeiro boot."
-warn "Execute depois: vault kv patch secret/cluster/dtrack api_key=<valor>"
-warn "Deixando api_key vazio por enquanto."
-
-vault kv put secret/cluster/dtrack \
-  db_password="$DTRACK_DB_PW" \
-  api_key=""
-info "secret/cluster/dtrack criado (api_key pendente)."
-
 step "Bootstrap do Vault concluído"
 info ""
-info "Próximos passos:"
-info "  1. Após Dependency Track subir, recupere a API key e atualize:"
-info "       vault kv patch secret/cluster/dtrack api_key=<valor>"
-info "  2. Force-sync dos ExternalSecrets:"
-info "       kubectl annotate es --all -A force-sync=\$(date +%s) --overwrite"
+info "Todos os secrets de aplicação (grafana, postgresql, keycloak, dtrack) foram"
+info "gerados automaticamente pelo Job vault-bootstrap com senhas aleatórias de 32 chars."
+info ""
+info "Pendente após Dependency Track subir:"
+info "  vault exec -n vault security-vault-0 -- vault kv patch secret/cluster/dtrack api_key=<valor>"
