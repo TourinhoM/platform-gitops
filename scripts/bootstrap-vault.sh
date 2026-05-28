@@ -80,10 +80,13 @@ else
   $KUBECTL delete job vault-bootstrap -n vault --ignore-not-found
 
   if [[ -n "$PLATFORM_SECURITY_PATH" && -d "$PLATFORM_SECURITY_PATH/vault" ]]; then
-    $KUBECTL apply -k "$PLATFORM_SECURITY_PATH/vault"
+    # Aplica apenas os recursos de bootstrap — Certificate e Ingress são gerenciados pelo ArgoCD
+    $KUBECTL apply -f "$PLATFORM_SECURITY_PATH/vault/configmap-bootstrap.yaml"
+    $KUBECTL apply -f "$PLATFORM_SECURITY_PATH/vault/job-bootstrap.yaml"
   else
     warn "PLATFORM_SECURITY_PATH não encontrado. Aplique manualmente:"
-    warn "  kubectl apply -k <path>/platform-security/vault"
+    warn "  kubectl apply -f <path>/platform-security/vault/configmap-bootstrap.yaml"
+    warn "  kubectl apply -f <path>/platform-security/vault/job-bootstrap.yaml"
   fi
 
   info "Aguardando Job vault-bootstrap completar..."
