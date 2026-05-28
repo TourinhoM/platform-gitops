@@ -21,6 +21,12 @@ spec:
     syncOptions:
       - CreateNamespace=true
       - SkipDryRunOnMissingResource=true
+    retry:
+      limit: 15
+      backoff:
+        duration: 10s
+        factor: 2
+        maxDuration: 3m
 
 # TODO (este arquivo):
 # - Quando houver ambiente prod, criar outro Application para `k8s/overlays/prod`
