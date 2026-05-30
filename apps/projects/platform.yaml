@@ -8,7 +8,8 @@ spec:
   sourceRepos:
     - https://github.com/TourinhoM/platform-auth        # era deploy-keycloak
     - https://github.com/TourinhoM/platform-data        # era deploy-postgresql
-    - https://github.com/TourinhoM/platform-backstage   # futuro
+    - https://github.com/TourinhoM/platform-backstage
+    - https://backstage.github.io/charts
     - https://github.com/keycloak/keycloak-k8s-resources
   destinations:
     - namespace: keycloak
