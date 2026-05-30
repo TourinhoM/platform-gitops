@@ -6,7 +6,7 @@ metadata:
   annotations:
     argocd.argoproj.io/sync-wave: "4"
 spec:
-  project: platform
+  project: system
   source:
     repoURL: https://github.com/TourinhoM/platform-gitops
     targetRevision: main
