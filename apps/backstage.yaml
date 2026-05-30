@@ -1,0 +1,54 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: backstage
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "5"
+spec:
+  project: platform
+  source:
+    repoURL: https://backstage.github.io/charts
+    chart: backstage
+    targetRevision: 2.6.0
+    helm:
+      values: |
+        backstage:
+          image:
+            registry: ghcr.io
+            repository: tourinhoM/platform-backstage
+            tag: latest
+          extraEnvVarsSecret: backstage-secrets
+          extraAppConfig:
+            - filename: app-config.yaml
+              configMapRef: backstage-app-config
+
+        postgresql:
+          enabled: false
+
+        ingress:
+          enabled: true
+          className: traefik
+          annotations:
+            traefik.ingress.kubernetes.io/router.entrypoints: web,websecure
+          host: backstage.local
+          tls:
+            enabled: true
+            secretName: backstage-tls
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: backstage
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - SkipDryRunOnMissingResource=true
+    retry:
+      limit: 15
+      backoff:
+        duration: 10s
+        factor: 2
+        maxDuration: 3m

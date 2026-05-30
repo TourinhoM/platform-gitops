@@ -17,3 +17,4 @@ resources:
   - infra-keycloak.yaml
   - security-dtrack.yaml
   - security-dtrack-config.yaml
+  - backstage.yaml
