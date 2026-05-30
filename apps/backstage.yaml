@@ -10,7 +10,7 @@ spec:
   source:
     repoURL: https://backstage.github.io/charts
     chart: backstage
-    targetRevision: 2.6.0
+    targetRevision: 2.8.0
     helm:
       values: |
         backstage:
@@ -18,7 +18,8 @@ spec:
             registry: ghcr.io
             repository: tourinhoM/platform-backstage
             tag: latest
-          extraEnvVarsSecret: backstage-secrets
+          extraEnvVarsSecrets:
+            - backstage-secrets
           extraAppConfig:
             - filename: app-config.yaml
               configMapRef: backstage-app-config
