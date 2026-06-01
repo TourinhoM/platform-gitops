@@ -17,19 +17,30 @@ spec:
           image:
             registry: ghcr.io
             repository: tourinhom/platform-backstage
-            tag: 1.2.4
+            tag: 1.0.2
           extraEnvVarsSecrets:
             - backstage-secrets
           appConfig:
             app:
               title: Platform Lab
               baseUrl: https://backstage.local
+              packages: all
+              extensions:
+                - page:catalog:
+                    config:
+                      path: /
             organization:
               name: TourinhoM
             backend:
               baseUrl: https://backstage.local
               listen:
                 port: 7007
+              csp:
+                connect-src: ["'self'", 'http:', 'https:']
+              cors:
+                origin: https://backstage.local
+                methods: [GET, HEAD, PATCH, POST, PUT, DELETE]
+                credentials: true
               database:
                 client: pg
                 connection:
@@ -38,19 +49,39 @@ spec:
                   user: backstage
                   password: ${POSTGRES_PASSWORD}
                   database: backstage
+            integrations:
+              github:
+                - host: github.com
+                  token: ${GITHUB_TOKEN}
             auth:
               environment: production
               providers:
                 guest:
                   dangerouslyAllowOutsideDevelopment: true
+                github:
+                  production:
+                    clientId: ${GITHUB_CLIENT_ID}
+                    clientSecret: ${GITHUB_CLIENT_SECRET}
+                    signIn:
+                      resolvers:
+                        - resolver: usernameMatchingUserEntityName
+                          dangerouslyAllowSignInWithoutUserInCatalog: true
             catalog:
+              import:
+                entityFilename: catalog-info.yaml
+                pullRequestBranchName: backstage-integration
               rules:
-                - allow: [Component, System, API, Resource, Location, Group, User]
-            kubernetes:
-              serviceLocatorMethod:
-                type: multiTenant
-              clusterLocatorMethods:
-                - type: localKubernetes
+                - allow: [Component, System, API, Resource, Location, Group, User, Template]
+              providers:
+                github:
+                  TourinhoM:
+                    organization: TourinhoM
+                    catalogPath: /catalog-info.yaml
+                    filters:
+                      branch: main
+                    schedule:
+                      frequency: { minutes: 30 }
+                      timeout: { minutes: 3 }
             argocd:
               appLocatorMethods:
                 - type: config
@@ -59,6 +90,8 @@ spec:
                       url: https://argocd.local
                       username: admin
                       password: ${ARGOCD_ADMIN_PASSWORD}
+            permission:
+              enabled: true
 
         postgresql:
           enabled: false
