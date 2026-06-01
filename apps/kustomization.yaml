@@ -5,6 +5,7 @@ resources:
   - projects/monitoring.yaml
   - projects/platform.yaml
   - projects/apps.yaml
+  - projects/scaffolded-apps.yaml
   - security-cert-manager-app.yaml
   - security-cert-manager-config-app.yaml
   - system-app.yaml

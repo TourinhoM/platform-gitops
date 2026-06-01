@@ -1,0 +1,19 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: scaffolded-apps
+  namespace: argocd
+spec:
+  description: Apps criadas pelo scaffolder do Backstage na org tourinho-labs (auto-discovery)
+  sourceRepos:
+    - https://github.com/tourinho-labs/*
+  destinations:
+    # namespace próprio de cada app + default (onde o AppNamespace claim é criado)
+    - namespace: "*"
+      server: https://kubernetes.default.svc
+  namespaceResourceWhitelist:
+    - group: "*"
+      kind: "*"
+  clusterResourceWhitelist:
+    - group: "*"
+      kind: "*"

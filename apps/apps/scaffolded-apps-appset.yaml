@@ -1,0 +1,44 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: scaffolded-apps
+  namespace: argocd
+spec:
+  goTemplate: true
+  goTemplateOptions: ["missingkey=error"]
+  generators:
+    # Varre a org tourinho-labs e gera 1 Application por repo que tenha pasta k8s/.
+    # Conta pessoal (TourinhoM) daria 404 aqui — por isso as apps novas nascem na org.
+    - scmProvider:
+        github:
+          organization: tourinho-labs
+          tokenRef:
+            secretName: github-scm-token
+            key: token
+        filters:
+          - pathsExist: [k8s]
+  template:
+    metadata:
+      name: "{{ .repository }}"
+    spec:
+      project: scaffolded-apps
+      source:
+        repoURL: "{{ .url }}"
+        targetRevision: "{{ .branch }}"
+        path: k8s
+      destination:
+        server: https://kubernetes.default.svc
+        namespace: "{{ .repository }}"
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+        syncOptions:
+          - CreateNamespace=true
+          - SkipDryRunOnMissingResource=true
+        retry:
+          limit: 15
+          backoff:
+            duration: 10s
+            factor: 2
+            maxDuration: 3m

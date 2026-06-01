@@ -4,3 +4,4 @@ resources:
   - app-catalog.yaml
   - app-reviews.yaml
   - app-bff.yaml
+  - scaffolded-apps-appset.yaml
