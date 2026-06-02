@@ -10,6 +10,8 @@ spec:
     # Varre a org tourinho-labs e gera 1 Application por repo que tenha pasta k8s/.
     # Conta pessoal (TourinhoM) daria 404 aqui — por isso as apps novas nascem na org.
     - scmProvider:
+        # https → .url devolve clone URL HTTPS (repo público, ArgoCD acessa sem chave SSH)
+        cloneProtocol: https
         github:
           organization: tourinho-labs
           tokenRef:
