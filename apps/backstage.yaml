@@ -17,7 +17,7 @@ spec:
           image:
             registry: ghcr.io
             repository: tourinhom/platform-backstage
-            tag: 1.2.0
+            tag: 1.3.0
           extraEnvVarsSecrets:
             - backstage-secrets
           appConfig:
@@ -92,6 +92,34 @@ spec:
                       password: ${ARGOCD_ADMIN_PASSWORD}
             permission:
               enabled: true
+
+            proxy:
+              endpoints:
+                '/grafana/api':
+                  target: http://monitoring-grafana.monitoring.svc
+                  headers:
+                    Authorization: Bearer ${GRAFANA_TOKEN}
+
+            techdocs:
+              builder: 'local'
+              generator:
+                runIn: 'local'
+              publisher:
+                type: 'local'
+
+            kubernetes:
+              serviceLocatorMethod:
+                type: multiTenant
+              clusterLocatorMethods:
+                - type: config
+                  clusters:
+                    - name: homelab
+                      url: https://kubernetes.default.svc
+                      authProvider: serviceAccount
+
+            grafana:
+              domain: https://grafana.local
+              unifiedAlerting: true
 
         postgresql:
           enabled: false
