@@ -12,6 +12,8 @@ spec:
     - scmProvider:
         # https → .url devolve clone URL HTTPS (repo público, ArgoCD acessa sem chave SSH)
         cloneProtocol: https
+        # Re-escaneia a org a cada 10min (default do controller é ~30min).
+        requeueAfterSeconds: 600
         github:
           organization: tourinho-labs
           tokenRef:
