@@ -7,5 +7,6 @@ resources:
   - external-secrets-config.yaml
   - security-trivy-operator.yaml
   - security-kyverno.yaml
+  - security-kyverno-policies.yaml
   - security-policy-reporter.yaml
   - keycloak-operator.yaml
