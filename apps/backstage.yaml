@@ -17,7 +17,7 @@ spec:
           image:
             registry: ghcr.io
             repository: tourinhom/platform-backstage
-            tag: 1.4.0
+            tag: 1.4.1
           extraEnvVarsSecrets:
             - backstage-secrets
           appConfig:
