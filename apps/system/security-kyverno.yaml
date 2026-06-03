@@ -1,0 +1,56 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: security-kyverno
+  namespace: argocd
+  annotations:
+    # Wave 0 = chart + CRDs primeiro. O reports-controller gera os
+    # CRDs PolicyReport que o Policy Reporter (wave 1) consome, e o
+    # security-kyverno-config (policies, em platform-security) vem
+    # depois ainda — as policies referenciam os CRDs deste chart.
+    argocd.argoproj.io/sync-wave: "0"
+spec:
+  project: system
+
+  source:
+    repoURL: https://kyverno.github.io/kyverno/
+    chart: kyverno
+    targetRevision: 3.8.1
+    helm:
+      values: |
+        # --- Controllers ---
+        # admission + background + reports ficam ON.
+        # reports-controller e ESSENCIAL: produz os CRDs PolicyReport
+        # que o Policy Reporter consome.
+        admissionController:
+          replicas: 1
+        backgroundController:
+          replicas: 1
+        reportsController:
+          replicas: 1
+
+        # cleanup-controller OFF: so serve p/ TTL/cleanup de recursos,
+        # nao usamos ainda. Menos um deployment no WSL single-node.
+        cleanupController:
+          enabled: false
+
+        # --- Failure policy ---
+        # Forca failurePolicy=Ignore em TODOS os webhooks no inicio:
+        # se o Kyverno cair, NAO trava o admission do cluster inteiro.
+        # Endurecer (remover isto) quando as policies sairem de Audit
+        # p/ Enforce e a estabilidade estiver comprovada.
+        features:
+          forceFailurePolicyIgnore:
+            enabled: true
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: kyverno
+
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true

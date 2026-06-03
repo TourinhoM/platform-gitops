@@ -1,0 +1,47 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: security-policy-reporter
+  namespace: argocd
+  annotations:
+    # Wave 1 = depois do Kyverno (wave 0), que precisa existir p/
+    # gerar os CRDs PolicyReport que o Policy Reporter agrega.
+    argocd.argoproj.io/sync-wave: "1"
+spec:
+  project: system
+
+  source:
+    repoURL: https://kyverno.github.io/policy-reporter/
+    chart: policy-reporter
+    targetRevision: 3.7.4
+    helm:
+      values: |
+        # UI propria do Policy Reporter (dashboard de PolicyReports,
+        # ao lado do trivy-operator/dtrack). Acesso via port-forward
+        # no inicio; ingress fica p/ depois.
+        ui:
+          enabled: true
+
+        # REST API: e isto que o plugin do Backstage consome.
+        # In-cluster: http://policy-reporter.policy-reporter.svc:8080
+        rest:
+          enabled: true
+
+        # Subchart do Kyverno: expoe detalhes de policy (blockReports
+        # etc.). Necessario p/ o plugin oficial @kyverno/* ligar os
+        # reports as policies de origem.
+        plugin:
+          kyverno:
+            enabled: true
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: policy-reporter
+
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true

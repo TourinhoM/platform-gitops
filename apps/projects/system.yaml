@@ -15,6 +15,8 @@ spec:
     - https://charts.external-secrets.io
     - https://charts.jetstack.io
     - https://aquasecurity.github.io/helm-charts/
+    - https://kyverno.github.io/kyverno/
+    - https://kyverno.github.io/policy-reporter/
     - https://github.com/keycloak/keycloak-k8s-resources
     - https://dependencytrack.github.io/helm-charts
     - https://helm.releases.hashicorp.com
@@ -28,6 +30,10 @@ spec:
     - namespace: cert-manager
       server: https://kubernetes.default.svc
     - namespace: trivy-system
+      server: https://kubernetes.default.svc
+    - namespace: kyverno
+      server: https://kubernetes.default.svc
+    - namespace: policy-reporter
       server: https://kubernetes.default.svc
     - namespace: dtrack
       server: https://kubernetes.default.svc
