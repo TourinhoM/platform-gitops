@@ -9,6 +9,7 @@ metadata:
     # security-kyverno-config (policies, em platform-security) vem
     # depois ainda — as policies referenciam os CRDs deste chart.
     argocd.argoproj.io/sync-wave: "0"
+    argocd.argoproj.io/compare-options: ServerSideDiff=true,IncludeMutationWebhook=true
 spec:
   project: system
 
