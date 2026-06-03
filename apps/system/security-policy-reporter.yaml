@@ -17,10 +17,27 @@ spec:
     helm:
       values: |
         # UI propria do Policy Reporter (dashboard de PolicyReports,
-        # ao lado do trivy-operator/dtrack). Acesso via port-forward
-        # no inicio; ingress fica p/ depois.
+        # ao lado do trivy-operator/dtrack), exposta em
+        # https://policy-reporter.local (Traefik + cert-manager).
+        # O secret TLS e criado pelo ingress-shim do cert-manager
+        # (annotation cluster-issuer: ca-issuer), padrao dtrack/vault.
         ui:
           enabled: true
+          ingress:
+            enabled: true
+            className: traefik
+            annotations:
+              traefik.ingress.kubernetes.io/router.entrypoints: web,websecure
+              cert-manager.io/cluster-issuer: ca-issuer
+            hosts:
+              - host: policy-reporter.local
+                paths:
+                  - path: /
+                    pathType: Prefix
+            tls:
+              - hosts:
+                  - policy-reporter.local
+                secretName: policy-reporter-tls
 
         # REST API: e isto que o plugin do Backstage consome.
         # In-cluster: http://policy-reporter.policy-reporter.svc:8080
