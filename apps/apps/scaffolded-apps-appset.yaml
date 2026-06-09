@@ -7,8 +7,10 @@ spec:
   goTemplate: true
   goTemplateOptions: ["missingkey=error"]
   generators:
-    # Varre a org tourinho-labs e gera 1 Application por repo que tenha pasta k8s/.
-    # Conta pessoal (TourinhoM) daria 404 aqui — por isso as apps novas nascem na org.
+    # Varre a org tourinho-labs e gera 1 Application por repo de deploy gitops-<app>.
+    # Os manifests moram na raiz do repo gitops (não mais em k8s/); o repo de
+    # código é separado e não entra aqui. Conta pessoal (TourinhoM) daria 404 —
+    # por isso as apps novas nascem na org.
     - scmProvider:
         # https → .url devolve clone URL HTTPS (repo público, ArgoCD acessa sem chave SSH)
         cloneProtocol: https
@@ -20,19 +22,24 @@ spec:
             secretName: github-scm-token
             key: token
         filters:
-          - pathsExist: [k8s]
+          # Repo nomeado gitops-* E com kustomization.yaml na raiz (guarda contra
+          # repo gitops- vazio/incompleto que não renderiza).
+          - repositoryMatch: ^gitops-
+            pathsExist: [kustomization.yaml]
   template:
     metadata:
-      name: "{{ .repository }}"
+      # Application = nome do app (sem o prefixo gitops-) pra casar com a
+      # anotação argocd/app-name: <app> do catalog-info (plugin ArgoCD do Backstage).
+      name: "{{ trimPrefix \"gitops-\" .repository }}"
     spec:
       project: scaffolded-apps
       source:
         repoURL: "{{ .url }}"
         targetRevision: "{{ .branch }}"
-        path: k8s
+        path: "."
       destination:
         server: https://kubernetes.default.svc
-        namespace: "{{ .repository }}"
+        namespace: "{{ trimPrefix \"gitops-\" .repository }}"
       syncPolicy:
         automated:
           prune: true
