@@ -40,6 +40,15 @@ spec:
       destination:
         server: https://kubernetes.default.svc
         namespace: "{{ trimPrefix \"gitops-\" .repository }}"
+      # Reloader rola pods patchando annotation no pod template (fora do git).
+      # Sem ignoreDifferences, o selfHeal reverte o patch → rollout duplo +
+      # OutOfSync piscando a cada reload. RespectIgnoreDifferences faz o sync
+      # preservar o campo ignorado.
+      ignoreDifferences:
+        - group: apps
+          kind: Deployment
+          jsonPointers:
+            - /spec/template/metadata/annotations/reloader.stakater.com~1last-reloaded-from
       syncPolicy:
         automated:
           prune: true
@@ -47,6 +56,7 @@ spec:
         syncOptions:
           - CreateNamespace=true
           - SkipDryRunOnMissingResource=true
+          - RespectIgnoreDifferences=true
         retry:
           limit: 15
           backoff:
