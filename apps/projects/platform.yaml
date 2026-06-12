@@ -11,6 +11,7 @@ spec:
     - https://github.com/TourinhoM/platform-backstage
     - https://backstage.github.io/charts
     - https://github.com/keycloak/keycloak-k8s-resources
+    - https://stakater.github.io/stakater-charts          # reloader
   destinations:
     - namespace: keycloak
       server: https://kubernetes.default.svc
@@ -19,6 +20,8 @@ spec:
     - namespace: platform-data
       server: https://kubernetes.default.svc
     - namespace: backstage
+      server: https://kubernetes.default.svc
+    - namespace: reloader
       server: https://kubernetes.default.svc
   clusterResourceWhitelist:
     - group: "*"
