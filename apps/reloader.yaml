@@ -18,6 +18,10 @@ spec:
           # estável no pod template — fácil de ignorar no Argo (ignoreDifferences
           # no ApplicationSet) sem listar env vars injetadas.
           reloadStrategy: annotations
+          # CRIAÇÃO de Secret/CM rastreado também rola o pod (default só
+          # update) — caso real: capability nova entrega db-conn que não
+          # existia; sem isto o pod fica cego até alguém tocar o Secret.
+          reloadOnCreate: true
           # Só workloads anotados (reloader.stakater.com/auto no app-base) —
           # mudança em Secret/ConfigMap consumido rola o pod sozinho. É o que
           # faz capability nova (db-conn) e edição de env.properties chegarem
