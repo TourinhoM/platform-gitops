@@ -20,4 +20,3 @@ resources:
   - security-dtrack-config.yaml
   - backstage.yaml
   - backstage-config.yaml
-  - reloader.yaml

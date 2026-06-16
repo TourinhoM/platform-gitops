@@ -49,14 +49,14 @@ spec:
         server: https://kubernetes.default.svc
         # ns = <app>-<env>; a claim AppNamespace (em default) cria esse ns com a cerca.
         namespace: "{{ trimPrefix \"gitops-\" .repository }}-{{ .path.basename }}"
-      # Reloader rola pods patchando annotation no pod template (fora do git).
-      # ignoreDifferences impede o selfHeal de reverter o patch. Sai no A6 (Reloader
-      # morre); por ora inócuo nas apps de binding (não têm a annotation).
+      # HPA é dono de /spec/replicas quando autoscaling on — sem isto o selfHeal
+      # reverte a escala do HPA pro valor do git → OutOfSync piscando. Inócuo nas
+      # apps sem HPA (replicas não sofre drift). (Reloader morreu no A6.)
       ignoreDifferences:
         - group: apps
           kind: Deployment
           jsonPointers:
-            - /spec/template/metadata/annotations/reloader.stakater.com~1last-reloaded-from
+            - /spec/replicas
       syncPolicy:
         automated:
           prune: true
