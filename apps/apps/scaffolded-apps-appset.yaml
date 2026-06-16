@@ -7,43 +7,51 @@ spec:
   goTemplate: true
   goTemplateOptions: ["missingkey=error"]
   generators:
-    # Varre a org tourinho-labs e gera 1 Application por repo de deploy gitops-<app>.
-    # Os manifests moram na raiz do repo gitops (não mais em k8s/); o repo de
-    # código é separado e não entra aqui. Conta pessoal (TourinhoM) daria 404 —
-    # por isso as apps novas nascem na org.
-    - scmProvider:
-        # https → .url devolve clone URL HTTPS (repo público, ArgoCD acessa sem chave SSH)
-        cloneProtocol: https
-        # Re-escaneia a org a cada 10min (default do controller é ~30min).
-        requeueAfterSeconds: 600
-        github:
-          organization: tourinho-labs
-          tokenRef:
-            secretName: github-scm-token
-            key: token
-        filters:
-          # Repo nomeado gitops-* E com kustomization.yaml na raiz (guarda contra
-          # repo gitops- vazio/incompleto que não renderiza).
-          - repositoryMatch: ^gitops-
-            pathsExist: [kustomization.yaml]
+    # MATRIX: cada repo gitops-<app> (scmProvider varre a org) × cada overlay
+    # (git directories sobre overlays/*). Produz 1 Application por (app, env) —
+    # <app>-<env>, cada um no seu namespace no cluster. Conta pessoal (TourinhoM)
+    # daria 404 no scmProvider; por isso as apps nascem na org tourinho-labs.
+    - matrix:
+        generators:
+          - scmProvider:
+              # https → .url devolve clone URL HTTPS (repo público, sem chave SSH).
+              cloneProtocol: https
+              requeueAfterSeconds: 600
+              github:
+                organization: tourinho-labs
+                tokenRef:
+                  secretName: github-scm-token
+                  key: token
+              filters:
+                # repo gitops-* E multi-ambiente (tem overlays/) — guarda contra
+                # repo flat antigo/incompleto que não renderiza.
+                - repositoryMatch: ^gitops-
+                  pathsExist: [overlays]
+          # repoURL/revision vêm dos params do scmProvider (matrix passa adiante).
+          - git:
+              repoURL: "{{ .url }}"
+              revision: "{{ .branch }}"
+              directories:
+                - path: overlays/*
   template:
     metadata:
-      # Application = nome do app (sem o prefixo gitops-) pra casar com a
-      # anotação argocd/app-name: <app> do catalog-info (plugin ArgoCD do Backstage).
-      name: "{{ trimPrefix \"gitops-\" .repository }}"
+      # <app>-<env>: app sem o prefixo gitops-, env = basename do overlay. Casa
+      # com a anotação argocd/app-name do catalog-info (plugin ArgoCD do Backstage).
+      name: "{{ trimPrefix \"gitops-\" .repository }}-{{ .path.basename }}"
     spec:
       project: scaffolded-apps
       source:
         repoURL: "{{ .url }}"
         targetRevision: "{{ .branch }}"
-        path: "."
+        # overlays/<env> — não mais a raiz; cada App sincroniza um overlay.
+        path: "{{ .path.path }}"
       destination:
         server: https://kubernetes.default.svc
-        namespace: "{{ trimPrefix \"gitops-\" .repository }}"
+        # ns = <app>-<env>; a claim AppNamespace (em default) cria esse ns com a cerca.
+        namespace: "{{ trimPrefix \"gitops-\" .repository }}-{{ .path.basename }}"
       # Reloader rola pods patchando annotation no pod template (fora do git).
-      # Sem ignoreDifferences, o selfHeal reverte o patch → rollout duplo +
-      # OutOfSync piscando a cada reload. RespectIgnoreDifferences faz o sync
-      # preservar o campo ignorado.
+      # ignoreDifferences impede o selfHeal de reverter o patch. Sai no A6 (Reloader
+      # morre); por ora inócuo nas apps de binding (não têm a annotation).
       ignoreDifferences:
         - group: apps
           kind: Deployment
