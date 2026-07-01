@@ -1,0 +1,25 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: app-of-apps
+  namespace: argocd
+spec:
+  description: Camada app-of-apps — pointers que criam Applications/ApplicationSets a partir dos repos platform-*
+  # Cerca do topo: só os repos platform-*, só o namespace argocd, só kinds de app.
+  sourceRepos:
+    - https://github.com/TourinhoM/platform-gitops       # apps-app, platform-app, system-app
+    - https://github.com/TourinhoM/platform-observe       # monitoring-app
+    - https://github.com/TourinhoM/platform-security      # security-app
+    - https://github.com/TourinhoM/platform-crossplane    # crossplane-app
+    - https://github.com/TourinhoM/platform-apis          # platform-apis-app
+    - https://github.com/TourinhoM/platform-backstage     # backstage-app
+  destinations:
+    - namespace: argocd
+      server: https://kubernetes.default.svc
+  # Pointers criam APENAS Applications/ApplicationSets — nada de workload nem cluster resource.
+  namespaceResourceWhitelist:
+    - group: argoproj.io
+      kind: Application
+    - group: argoproj.io
+      kind: ApplicationSet
+  clusterResourceWhitelist: []
