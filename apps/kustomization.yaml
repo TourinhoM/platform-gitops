@@ -7,6 +7,7 @@ resources:
   - projects/apps.yaml
   - projects/scaffolded-apps.yaml
   - projects/security.yaml
+  - projects/backstage.yaml
   - security-cert-manager-app.yaml
   - security-cert-manager-config-app.yaml
   - system-app.yaml
@@ -17,5 +18,4 @@ resources:
   - platform-apis-app.yaml
   - apps-app.yaml
   - infra-keycloak.yaml
-  - backstage.yaml
-  - backstage-config.yaml
+  - backstage-app.yaml

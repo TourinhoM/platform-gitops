@@ -1,0 +1,22 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: backstage
+  namespace: argocd
+spec:
+  description: Portal IDP (Backstage) — release e config em platform-backstage/deploy
+  # Cerca escopada ao que o domínio usa (não */*).
+  sourceRepos:
+    - https://backstage.github.io/charts                 # chart do Backstage
+    - https://github.com/TourinhoM/platform-backstage    # release + config (deploy/)
+  destinations:
+    - namespace: backstage
+      server: https://kubernetes.default.svc
+  # Cluster-scoped: chart não cria nenhum; só o config (kubernetes-reader) + Namespace.
+  clusterResourceWhitelist:
+    - group: ""
+      kind: Namespace
+    - group: rbac.authorization.k8s.io
+      kind: ClusterRole
+    - group: rbac.authorization.k8s.io
+      kind: ClusterRoleBinding
