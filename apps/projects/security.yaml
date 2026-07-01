@@ -1,0 +1,37 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: security
+  namespace: argocd
+spec:
+  description: Domínio de segurança (Vault, Dependency-Track, configs de Kyverno/Trivy) — releases e configs em platform-security
+  # Cerca escopada ao que o domínio realmente usa (não */*).
+  sourceRepos:
+    - https://helm.releases.hashicorp.com                # chart do Vault
+    - https://dependencytrack.github.io/helm-charts      # chart do Dependency-Track
+    - https://github.com/TourinhoM/platform-security     # releases + configs do domínio
+  destinations:
+    - namespace: vault
+      server: https://kubernetes.default.svc
+    - namespace: dtrack
+      server: https://kubernetes.default.svc
+    - namespace: kyverno
+      server: https://kubernetes.default.svc
+    - namespace: trivy-system
+      server: https://kubernetes.default.svc
+  # Cluster-scoped enumerado do conteúdo real + render dos charts vault/dtrack:
+  #   Namespace          — dtrack/base/namespace.yaml + CreateNamespace=true
+  #   ClusterRole/Binding — chart do Vault + sbom-sync do dtrack
+  #   ClusterPolicy       — kyverno-config (x3)
+  #   MutatingWebhook     — injector do Vault (desligado hoje; margem de segurança)
+  clusterResourceWhitelist:
+    - group: ""
+      kind: Namespace
+    - group: rbac.authorization.k8s.io
+      kind: ClusterRole
+    - group: rbac.authorization.k8s.io
+      kind: ClusterRoleBinding
+    - group: kyverno.io
+      kind: ClusterPolicy
+    - group: admissionregistration.k8s.io
+      kind: MutatingWebhookConfiguration
