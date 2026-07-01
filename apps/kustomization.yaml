@@ -16,7 +16,5 @@ resources:
   - platform-apis-app.yaml
   - apps-app.yaml
   - infra-keycloak.yaml
-  - security-dtrack.yaml
-  - security-dtrack-config.yaml
   - backstage.yaml
   - backstage-config.yaml
