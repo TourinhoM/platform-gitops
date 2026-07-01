@@ -4,10 +4,11 @@ metadata:
   name: monitoring
   namespace: argocd
 spec:
-  description: Stack de observabilidade (Prometheus, Grafana, Alertmanager, Loki, Alloy) e dashboards
+  description: Stack de observabilidade (Prometheus, Grafana, Alertmanager, Loki, OTel Collector) e dashboards
   sourceRepos:
     - https://prometheus-community.github.io/helm-charts
     - https://grafana.github.io/helm-charts
+    - https://open-telemetry.github.io/opentelemetry-helm-charts   # otel-gateway + otel-agent (migracao Alloy -> OTel)
     - https://github.com/TourinhoM/platform-observe      # era deploy-stack-monitor + deploy-loki + deploy-tempo
     - https://github.com/TourinhoM/platform-gitops
   destinations:
