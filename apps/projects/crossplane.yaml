@@ -1,0 +1,22 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: crossplane
+  namespace: argocd
+spec:
+  description: Domínio Crossplane — runtime (core, providers, providerconfigs, rbac) em platform-crossplane
+  # sourceRepos/destinations apertados; cluster amplo por escolha (ver nota abaixo).
+  sourceRepos:
+    - https://charts.crossplane.io/stable                # chart do Crossplane core
+    - https://github.com/TourinhoM/platform-crossplane   # providers/providerconfigs/rbac do domínio
+  destinations:
+    - namespace: crossplane-system
+      server: https://kubernetes.default.svc
+    - namespace: argocd                                  # leaves (Application) vivem em argocd
+      server: https://kubernetes.default.svc
+  # Cluster amplo por natureza do componente: Crossplane instala CRDs em runtime
+  # (cada provider/Composition traz kinds novos). Enumerar quebraria a cada provider
+  # adicionado — o fence real fica em sourceRepos + destinations.
+  clusterResourceWhitelist:
+    - group: "*"
+      kind: "*"

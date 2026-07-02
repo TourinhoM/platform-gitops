@@ -1,0 +1,20 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: platform-apis
+  namespace: argocd
+spec:
+  description: Domínio das APIs de plataforma — XRDs/Compositions (appnamespace, appdatabase) em platform-apis
+  # Depende do domínio crossplane (runtime), mas isolado em project próprio.
+  sourceRepos:
+    - https://github.com/TourinhoM/platform-apis         # XRDs + Compositions
+  destinations:
+    - namespace: crossplane-system
+      server: https://kubernetes.default.svc
+    - namespace: argocd                                  # leaves (Application) vivem em argocd
+      server: https://kubernetes.default.svc
+  # Cluster amplo: XRDs geram CRDs e Compositions compõem kinds arbitrários em runtime;
+  # enumerar seria frágil. Fence real em sourceRepos + destinations.
+  clusterResourceWhitelist:
+    - group: "*"
+      kind: "*"

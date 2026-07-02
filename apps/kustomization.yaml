@@ -8,6 +8,8 @@ resources:
   - projects/scaffolded-apps.yaml
   - projects/security.yaml
   - projects/backstage.yaml
+  - projects/crossplane.yaml
+  - projects/platform-apis.yaml
   - projects/app-of-apps.yaml
   - security-cert-manager-app.yaml
   - security-cert-manager-config-app.yaml
