@@ -4,22 +4,18 @@ metadata:
   name: system
   namespace: argocd
 spec:
-  description: Componentes de plataforma do cluster (Argo CD self-management, External Secrets, Keycloak Operator, cert-manager, trivy-operator)
+  description: Substrato do cluster — Argo CD self-management, External Secrets, Keycloak Operator, cert-manager, Kyverno, policy-reporter, Trivy Operator
+  # sourceRepos/destinations escopados ao que os apps de `system` realmente usam.
+  # (crossplane/apis saíram p/ projects próprios; dtrack/vault/backstage vivem em security/backstage.)
   sourceRepos:
-    - https://github.com/TourinhoM/platform-gitops
-    - https://github.com/TourinhoM/platform-network      # era deploy-cert-manager
-    - https://github.com/TourinhoM/platform-security     # era deploy-dtrack + deploy-trivy-operator
-    - https://github.com/TourinhoM/platform-crossplane
-    - https://github.com/TourinhoM/platform-apis
-    - https://charts.crossplane.io/stable
-    - https://charts.external-secrets.io
-    - https://charts.jetstack.io
-    - https://aquasecurity.github.io/helm-charts/
-    - https://kyverno.github.io/kyverno/
-    - https://kyverno.github.io/policy-reporter/
-    - https://github.com/keycloak/keycloak-k8s-resources
-    - https://dependencytrack.github.io/helm-charts
-    - https://helm.releases.hashicorp.com
+    - https://github.com/TourinhoM/platform-gitops       # argocd self/config, external-secrets-config
+    - https://github.com/TourinhoM/platform-network      # cert-manager-config (era deploy-cert-manager)
+    - https://charts.external-secrets.io                 # External Secrets Operator
+    - https://charts.jetstack.io                         # cert-manager
+    - https://aquasecurity.github.io/helm-charts/        # Trivy Operator
+    - https://kyverno.github.io/kyverno/                 # Kyverno + policies
+    - https://kyverno.github.io/policy-reporter/         # policy-reporter
+    - https://github.com/keycloak/keycloak-k8s-resources # Keycloak Operator
   destinations:
     - namespace: argocd
       server: https://kubernetes.default.svc
@@ -35,14 +31,9 @@ spec:
       server: https://kubernetes.default.svc
     - namespace: policy-reporter
       server: https://kubernetes.default.svc
-    - namespace: dtrack
-      server: https://kubernetes.default.svc
-    - namespace: crossplane-system
-      server: https://kubernetes.default.svc
-    - namespace: vault
-      server: https://kubernetes.default.svc
-    - namespace: backstage
-      server: https://kubernetes.default.svc
+  # Cluster amplo por natureza do substrato: estes operators instalam CRDs,
+  # ClusterRoles e webhooks (cert-manager, ESO, Kyverno, Trivy, Keycloak Operator).
+  # Enumerar seria frágil; o fence real vive em sourceRepos + destinations.
   clusterResourceWhitelist:
     - group: "*"
       kind: "*"
