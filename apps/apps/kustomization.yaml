@@ -5,3 +5,4 @@ resources:
   - app-reviews.yaml
   - app-bff.yaml
   - scaffolded-apps-appset.yaml
+  - scaffolded-apps-helm-appset.yaml

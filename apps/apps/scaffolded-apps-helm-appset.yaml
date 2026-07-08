@@ -1,0 +1,139 @@
+# Discovery HELM — irmão do scaffolded-apps (kustomize). Aquele filtra
+# pathsExist:[overlays]; este filtra pathsExist:[Chart.yaml] (consumer chart Helm).
+# Mutuamente exclusivos: um gitops-<app> cai só num dos dois.
+#
+# Dois ApplicationSets:
+#   scaffolded-apps-helm-env   — 1 App por (app, env). O env = cada
+#     values/<env>.image.yaml que EXISTIR. No scaffold não há nenhum → 0 apps; o
+#     ambiente NASCE quando o Kargo promove e cria o arquivo (dev auto, hml/prod
+#     gated). É o equivalente Helm ao stages/→overlays/ do caminho kustomize.
+#   scaffolded-apps-helm-kargo — 1 App por repo, sobe kargo/ (Project/Warehouse/
+#     Stages). Nasce no scaffold pro Warehouse já começar a observar a image.
+#
+# NOTA: o AppProject `scaffolded-apps` precisa liberar os CRDs do Kargo
+# (Project cluster-scoped + Warehouse/Stage namespaced) e o ExternalSecret no
+# whitelist, senão o sync do -helm-kargo é bloqueado.
+---
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: scaffolded-apps-helm-env
+  namespace: argocd
+spec:
+  goTemplate: true
+  goTemplateOptions: ["missingkey=error"]
+  generators:
+    - matrix:
+        generators:
+          - scmProvider:
+              cloneProtocol: https
+              requeueAfterSeconds: 600
+              github:
+                organization: tourinho-labs
+                tokenRef:
+                  secretName: github-scm-token
+                  key: token
+              filters:
+                - repositoryMatch: ^gitops-
+                  pathsExist: [Chart.yaml]
+          # git FILES sobre os arquivos de image; 1 param-set por env ativo.
+          - git:
+              repoURL: "{{ .url }}"
+              revision: "{{ .branch }}"
+              files:
+                - path: "values/*.image.yaml"
+  template:
+    metadata:
+      # <app>-<env>: env = nome do arquivo sem ".image.yaml".
+      name: "{{ trimPrefix \"gitops-\" .repository }}-{{ trimSuffix \".image.yaml\" .path.filename }}"
+    spec:
+      project: scaffolded-apps
+      source:
+        repoURL: "{{ .url }}"
+        targetRevision: "{{ .branch }}"
+        path: .
+        helm:
+          # Release name = <app> (SEM o -<env>), senão o host do Ingress sai com o
+          # ambiente dobrado (<app>-<env>.<env>.<domínio>). A convenção é
+          # <app>.<ambiente>.<domínio>, e o common.ingress usa .Release.Name como
+          # 1º segmento.
+          releaseName: "{{ trimPrefix \"gitops-\" .repository }}"
+          # Camada last-wins: base + delta do dev + image do Kargo.
+          valueFiles:
+            - values.yaml
+            - "values/{{ trimSuffix \".image.yaml\" .path.filename }}.yaml"
+            - "{{ .path.path }}/{{ .path.filename }}"
+          # HOST é máquina/plataforma, injetado aqui (não vive no repo do app):
+          #   ambiente = nome do env (derivado do arquivo de image)
+          #   dominioPlataforma = constante da plataforma (edite 1x aqui p/ toda a org)
+          # O arquétipo (common) lê .Values.global.{ambiente,dominioPlataforma}.
+          parameters:
+            - name: global.ambiente
+              value: "{{ trimSuffix \".image.yaml\" .path.filename }}"
+            - name: global.dominioPlataforma
+              value: "plataforma.example.com"
+      destination:
+        server: https://kubernetes.default.svc
+        namespace: "{{ trimPrefix \"gitops-\" .repository }}-{{ trimSuffix \".image.yaml\" .path.filename }}"
+      # HPA é dono de /spec/replicas quando autoscaling on (mesmo motivo do
+      # scaffolded-apps kustomize) — evita OutOfSync piscando.
+      ignoreDifferences:
+        - group: apps
+          kind: Deployment
+          jsonPointers:
+            - /spec/replicas
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+        syncOptions:
+          - CreateNamespace=true
+          - RespectIgnoreDifferences=true
+        retry:
+          limit: 15
+          backoff:
+            duration: 10s
+            factor: 2
+            maxDuration: 3m
+---
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: scaffolded-apps-helm-kargo
+  namespace: argocd
+spec:
+  goTemplate: true
+  goTemplateOptions: ["missingkey=error"]
+  generators:
+    - scmProvider:
+        cloneProtocol: https
+        requeueAfterSeconds: 600
+        github:
+          organization: tourinho-labs
+          tokenRef:
+            secretName: github-scm-token
+            key: token
+        filters:
+          - repositoryMatch: ^gitops-
+            pathsExist: [kargo]
+  template:
+    metadata:
+      name: "{{ trimPrefix \"gitops-\" .repository }}-kargo"
+    spec:
+      project: scaffolded-apps
+      source:
+        repoURL: "{{ .url }}"
+        targetRevision: "{{ .branch }}"
+        path: kargo
+        directory:
+          recurse: true
+      destination:
+        server: https://kubernetes.default.svc
+        namespace: "{{ trimPrefix \"gitops-\" .repository }}"
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+        syncOptions:
+          - CreateNamespace=true
+          - ServerSideApply=true   # CRDs grandes do Kargo (Stage/Warehouse)
