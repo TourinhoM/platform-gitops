@@ -140,14 +140,15 @@ spec:
       containers:
         - name: argocd-repo-server
           imagePullPolicy: Always
-          # Operations pesadas (kustomize/helm render) — limit mais alto.
+          # Operations pesadas (kustomize/helm render) — 256Mi OOMava (61 restarts)
+          # rendendo charts grandes (kube-prometheus-stack/kargo). Sobe pra 512Mi.
           resources:
             requests:
               cpu: 50m
               memory: 128Mi
             limits:
               cpu: 500m
-              memory: 256Mi
+              memory: 512Mi
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -185,11 +186,12 @@ spec:
       containers:
         - name: argocd-application-controller
           imagePullPolicy: Always
-          # Limit 2Gi — OOMKilled com 1Gi (31 restarts, Exit Code 137).
+          # 1Gi->2Gi->2.5Gi: OOMKilled recorrente (137) conforme o nº de apps cresce.
+          # Combinar com processors reduzidos (argocd-cmd-params-cm) baixa o pico.
           resources:
             requests:
               cpu: 100m
               memory: 512Mi
             limits:
               cpu: 500m
-              memory: 2Gi
+              memory: 2560Mi

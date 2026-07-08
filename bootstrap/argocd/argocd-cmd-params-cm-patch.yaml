@@ -7,3 +7,8 @@ data:
   otlp.address: "otel-gateway.monitoring.svc.cluster.local:4317"
   otlp.insecure: "true"
   repo.server: "argocd-repo-server.argocd.svc.cluster.local:8081"
+  # Menos reconcile concorrente = pico de memória menor do application-controller
+  # (lab RAM-scarce, node ~84%). Defaults (status 20 / operation 25) exageram
+  # pra ~50 apps e é o que estoura o limit → OOMKilled.
+  controller.status.processors: "10"
+  controller.operation.processors: "5"
