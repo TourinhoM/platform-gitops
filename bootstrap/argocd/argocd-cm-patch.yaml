@@ -1,0 +1,32 @@
+# Convivência Kyverno (mutate) × Argo CD.
+#
+# O mutate `add-securitycontext-defaults` injeta securityContext
+# (seccompProfile, allowPrivilegeEscalation) nos templates de pod-controller
+# via autogen — campos que NÃO estão no Git. Sem este guard o Argo veria isso
+# como drift → OutOfSync → selfHeal removeria → Kyverno reinjeta no próximo
+# admission → loop de flapping.
+#
+# `managedFieldsManagers: [kyverno]` diz ao Argo p/ ignorar QUALQUER campo cujo
+# dono (managedFields) seja o field-manager `kyverno`, sem enumerar paths — então
+# vale p/ as ondas futuras (drop:[ALL], runAsNonRoot) sem editar nada aqui.
+# Aplicado global (todo app), pros kinds que a autogen do Kyverno muta.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: argocd-cm
+data:
+  resource.customizations.ignoreDifferences.apps_Deployment: |
+    managedFieldsManagers:
+      - kyverno
+  resource.customizations.ignoreDifferences.apps_StatefulSet: |
+    managedFieldsManagers:
+      - kyverno
+  resource.customizations.ignoreDifferences.apps_DaemonSet: |
+    managedFieldsManagers:
+      - kyverno
+  resource.customizations.ignoreDifferences.batch_Job: |
+    managedFieldsManagers:
+      - kyverno
+  resource.customizations.ignoreDifferences.batch_CronJob: |
+    managedFieldsManagers:
+      - kyverno

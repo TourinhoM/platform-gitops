@@ -1,0 +1,23 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: promotion
+  namespace: argocd
+spec:
+  description: Kargo (promoção de ambiente) + Argo Rollouts (motor de Analysis p/ verification)
+  sourceRepos:
+    - https://github.com/TourinhoM/platform-promotion   # apps/ + resources/
+    - ghcr.io/akuity/kargo-charts                        # chart do Kargo (OCI)
+    - https://argoproj.github.io/argo-helm               # chart do argo-rollouts
+  destinations:
+    - namespace: kargo
+      server: https://kubernetes.default.svc
+    - namespace: argo-rollouts
+      server: https://kubernetes.default.svc
+    # ClusterPromotionTask/ClusterAnalysisTemplate são cluster-scoped (sem namespace)
+    - namespace: "*"
+      server: https://kubernetes.default.svc
+  # Instala CRDs (Kargo/Rollouts) + aplica os CRs cluster-scoped → precisa de cluster.
+  clusterResourceWhitelist:
+    - group: "*"
+      kind: "*"

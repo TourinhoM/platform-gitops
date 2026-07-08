@@ -13,6 +13,7 @@ spec:
     - https://github.com/TourinhoM/platform-crossplane    # crossplane-app
     - https://github.com/TourinhoM/platform-apis          # platform-apis-app
     - https://github.com/TourinhoM/platform-backstage     # backstage-app
+    - https://github.com/TourinhoM/platform-promotion      # promotion-app
   destinations:
     - namespace: argocd
       server: https://kubernetes.default.svc

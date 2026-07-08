@@ -10,6 +10,7 @@ resources:
   - projects/backstage.yaml
   - projects/crossplane.yaml
   - projects/platform-apis.yaml
+  - projects/promotion.yaml
   - projects/app-of-apps.yaml
   - security-cert-manager-app.yaml
   - security-cert-manager-config-app.yaml
@@ -22,3 +23,4 @@ resources:
   - apps-app.yaml
   - infra-keycloak.yaml
   - backstage-app.yaml
+  - promotion-app.yaml
