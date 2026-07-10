@@ -137,3 +137,6 @@ spec:
         syncOptions:
           - CreateNamespace=true
           - ServerSideApply=true   # CRDs grandes do Kargo (Stage/Warehouse)
+        managedNamespaceMetadata:
+          labels:
+            kargo.akuity.io/project: "true"
