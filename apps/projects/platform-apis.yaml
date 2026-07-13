@@ -13,8 +13,7 @@ spec:
       server: https://kubernetes.default.svc
     - namespace: argocd                                  # leaves (Application) vivem em argocd
       server: https://kubernetes.default.svc
-  # Cluster amplo: XRDs geram CRDs e Compositions compõem kinds arbitrários em runtime;
-  # enumerar seria frágil. Fence real em sourceRepos + destinations.
+  # Whitelist cluster-wide para os CRDs gerados por XRDs/Compositions.
   clusterResourceWhitelist:
     - group: "*"
       kind: "*"

@@ -5,11 +5,10 @@ metadata:
   namespace: argocd
 spec:
   description: Substrato do cluster — Argo CD self-management, External Secrets, Keycloak Operator, cert-manager, Kyverno, policy-reporter, Trivy Operator
-  # sourceRepos/destinations escopados ao que os apps de `system` realmente usam.
-  # (crossplane/apis saíram p/ projects próprios; dtrack/vault/backstage vivem em security/backstage.)
+  # sourceRepos/destinations escopados aos apps de system.
   sourceRepos:
     - https://github.com/TourinhoM/platform-gitops       # argocd self/config, external-secrets-config
-    - https://github.com/TourinhoM/platform-network      # cert-manager-config (era deploy-cert-manager)
+    - https://github.com/TourinhoM/platform-network      # cert-manager-config
     - https://charts.external-secrets.io                 # External Secrets Operator
     - https://charts.jetstack.io                         # cert-manager
     - https://aquasecurity.github.io/helm-charts/        # Trivy Operator
@@ -31,9 +30,7 @@ spec:
       server: https://kubernetes.default.svc
     - namespace: policy-reporter
       server: https://kubernetes.default.svc
-  # Cluster amplo por natureza do substrato: estes operators instalam CRDs,
-  # ClusterRoles e webhooks (cert-manager, ESO, Kyverno, Trivy, Keycloak Operator).
-  # Enumerar seria frágil; o fence real vive em sourceRepos + destinations.
+  # Whitelist cluster-wide para os CRDs/ClusterRoles/webhooks dos operators.
   clusterResourceWhitelist:
     - group: "*"
       kind: "*"

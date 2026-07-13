@@ -1,8 +1,7 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
-# Bootstrap padrão completo via manifests oficiais do Argo CD.
-# A versão está pinada para manter reprodutibilidade.
+# Bootstrap do Argo CD via manifests oficiais (versão pinada).
 
 namespace: argocd
 

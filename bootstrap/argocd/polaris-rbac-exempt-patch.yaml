@@ -1,10 +1,4 @@
-# Polaris exemptions per-resource pros 5 dangers de RBAC inerentes ao Argo CD.
-#
-# Argo CD por design precisa dessas permissoes — restringir quebra a plataforma:
-#   - cluster-admin no application-controller: aplicar manifests arbitrarios em
-#     qualquer namespace eh a funcao core do GitOps controller.
-#   - pods/exec e pods/attach: sync hooks (PreSync, PostSync) e features de UI
-#     (logs, exec dentro do container) usam essas verbs.
+# Polaris exemptions per-resource para os dangers de RBAC do Argo CD.
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding

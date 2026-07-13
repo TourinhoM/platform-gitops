@@ -19,9 +19,5 @@ spec:
     syncOptions:
       - CreateNamespace=true
 
-# TODO (este arquivo):
-# - Trocar repoURL (SSH/HTTPS do seu git)
-# - Ajustar targetRevision (main/master/tag)
-# - Ajustar se você quer auto-sync do root (recomendado) ou manual
-# - Se você usa múltiplos clusters, trocar destination para apontar para o cluster correto
+# TODO: ajustar repoURL, targetRevision e destination.
 

@@ -1,6 +1,4 @@
-# Pointer app-of-apps → sincroniza platform-promotion/apps (controller Kargo +
-# argo-rollouts + kargo-resources). Mesmo padrão do monitoring-app. Os apps
-# aninhados usam o AppProject `promotion`.
+# Pointer app-of-apps: sincroniza platform-promotion/apps.
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:

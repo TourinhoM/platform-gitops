@@ -6,15 +6,15 @@ metadata:
 spec:
   description: Serviços de plataforma (auth, data, backstage)
   sourceRepos:
-    - https://github.com/TourinhoM/platform-auth        # era deploy-keycloak
-    - https://github.com/TourinhoM/platform-data        # era deploy-postgresql
+    - https://github.com/TourinhoM/platform-auth
+    - https://github.com/TourinhoM/platform-data
     - https://github.com/TourinhoM/platform-backstage
     - https://backstage.github.io/charts
     - https://github.com/keycloak/keycloak-k8s-resources
   destinations:
     - namespace: keycloak
       server: https://kubernetes.default.svc
-    - namespace: infra          # migrar → platform-data quando o repo for migrado
+    - namespace: infra
       server: https://kubernetes.default.svc
     - namespace: platform-data
       server: https://kubernetes.default.svc

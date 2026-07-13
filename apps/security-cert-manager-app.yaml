@@ -4,8 +4,7 @@ metadata:
   name: security-cert-manager
   namespace: argocd
   annotations:
-    # Wave 0 = chart + CRDs primeiro; Issuers/Certificates do
-    # deploy-cert-manager vem em wave 1 (depois dos CRDs prontos).
+    # Wave 0: chart e CRDs primeiro.
     argocd.argoproj.io/sync-wave: "0"
 spec:
   project: system
@@ -27,9 +26,7 @@ spec:
         global:
           leaderElection:
             namespace: cert-manager
-        # Prometheus annotations + ServiceMonitor pra integrar com
-        # kube-prometheus-stack (label release=monitoring no SM, ver
-        # values doc do chart pra forma corrente).
+        # Prometheus annotations + ServiceMonitor para o kube-prometheus-stack.
         prometheus:
           enabled: true
           servicemonitor:

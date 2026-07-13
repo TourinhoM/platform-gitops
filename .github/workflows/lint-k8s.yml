@@ -1,8 +1,7 @@
 name: Lint
 
 on:
-  # Qualquer branch — feedback imediato em feature branches; abrir PR
-  # nao duplica o run (PR mostra o check do push existente).
+  # Qualquer branch.
   push:
   # Pega drift do datreeio CRDs-catalog (schemas baixados em runtime).
   schedule:

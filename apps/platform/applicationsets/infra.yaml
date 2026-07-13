@@ -1,10 +1,4 @@
-# TODO: ApplicationSet é opcional.
-# Use se você quer gerar Applications por ambiente/pasta automaticamente.
-#
-# Plano:
-# - Trocar repoURL
-# - Habilitar listagem de diretórios em `envs/*/infra/*`
-# - Padronizar namespaces e syncPolicy
+# ApplicationSet opcional para gerar Applications por pasta de ambiente.
 
 apiVersion: argoproj.io/v1alpha1
 kind: ApplicationSet

@@ -1,13 +1,5 @@
 #!/usr/bin/env bash
 # Onboarding end-to-end do cluster: Argo CD + root app + ESO + Vault.
-#
-# Etapas:
-#   1. Instala Argo CD (bootstrap/argocd)
-#   2. Espera o argocd-server ficar Ready
-#   3. Aplica o root-app (que sincroniza tudo em apps/)
-#   4. Espera o namespace external-secrets e o controller do ESO
-#   5. Bootstrap do Vault (init, unseal, policies, secrets) — chama bootstrap-vault.sh
-#   6. Espera o ClusterSecretStore vault-homelab ficar Ready
 set -euo pipefail
 
 KUBECTL="${KUBECTL:-sudo k3s kubectl}"

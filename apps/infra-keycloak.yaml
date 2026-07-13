@@ -28,8 +28,5 @@ spec:
         factor: 2
         maxDuration: 3m
 
-# TODO (este arquivo):
-# - Trocar repoURL
-# - Se Keycloak for instalado por Helm, migrar para `source.helm`
-# - Ajustar namespaces (ex.: separar "identity")
+# TODO: trocar repoURL, considerar Helm e ajustar namespaces.
 

@@ -5,7 +5,7 @@ metadata:
   namespace: argocd
 spec:
   description: Domínio Crossplane — runtime (core, providers, providerconfigs, rbac) em platform-crossplane
-  # sourceRepos/destinations apertados; cluster amplo por escolha (ver nota abaixo).
+  # sourceRepos/destinations apertados.
   sourceRepos:
     - https://charts.crossplane.io/stable                # chart do Crossplane core
     - https://github.com/TourinhoM/platform-crossplane   # providers/providerconfigs/rbac do domínio
@@ -14,9 +14,7 @@ spec:
       server: https://kubernetes.default.svc
     - namespace: argocd                                  # leaves (Application) vivem em argocd
       server: https://kubernetes.default.svc
-  # Cluster amplo por natureza do componente: Crossplane instala CRDs em runtime
-  # (cada provider/Composition traz kinds novos). Enumerar quebraria a cada provider
-  # adicionado — o fence real fica em sourceRepos + destinations.
+  # Whitelist cluster-wide para os CRDs que o Crossplane instala em runtime.
   clusterResourceWhitelist:
     - group: "*"
       kind: "*"

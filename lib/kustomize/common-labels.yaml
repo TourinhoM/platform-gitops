@@ -8,7 +8,5 @@ fieldSpecs:
   - path: metadata/labels
     create: true
 
-# TODO:
-# - Adicionar labels padrão do seu cluster/organização
-# - Usar este transformer nos overlays de `envs/*/kustomization.yaml` se quiser
+# TODO: adicionar labels padrão e usar nos overlays.
 

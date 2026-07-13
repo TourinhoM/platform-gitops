@@ -1,10 +1,4 @@
-# TODO: se você não expõe a UI do Argo CD, pode remover este arquivo do kustomization.
-#
-# ATENÇÃO:
-# - O Argo CD por padrão expõe `argocd-server` com TLS interno.
-# - Dependendo do Ingress Controller, você pode precisar de anotações específicas.
-#
-# Este Ingress está propositalmente "placeholder" para você preencher.
+# Ingress placeholder para a UI do Argo CD.
 
 apiVersion: networking.k8s.io/v1
 kind: Ingress
@@ -34,9 +28,5 @@ spec:
                 name: argocd-server
                 port:
                   number: 80
-  # TODO: adicionar TLS (recomendado)
-  # tls:
-  #   - hosts:
-  #       - argocd.local
-  #     secretName: argocd-tls
+  # TODO: adicionar TLS.
 

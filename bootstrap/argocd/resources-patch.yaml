@@ -1,15 +1,4 @@
-# Strategic merge patches contra argo-cd v2.11.7/manifests/install.yaml.
-#
-# Objetivos:
-#   1. Definir resources.requests/limits (CPU + memoria) em todos os containers.
-#   2. Setar imagePullPolicy: Always em todos os containers (defesa contra
-#      tag mutation — proximo nivel seria digest pinning via Renovate).
-#   3. Declarar a porta 9001 do notifications-controller (resolve liveness-port
-#      false-positive do kube-linter — Argo CD nao declara a porta no spec mas
-#      a probe aponta pra ela).
-#   4. Adicionar Pod-level securityContext (runAsNonRoot + seccompProfile
-#      RuntimeDefault) nos workloads que upstream nao seta — reforca baseline
-#      a nivel de Pod alem do container.
+# Strategic merge patches do Argo CD: resources, imagePullPolicy, porta 9001 e securityContext.
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -140,8 +129,7 @@ spec:
       containers:
         - name: argocd-repo-server
           imagePullPolicy: Always
-          # Operations pesadas (kustomize/helm render) — 256Mi OOMava (61 restarts)
-          # rendendo charts grandes (kube-prometheus-stack/kargo). Sobe pra 512Mi.
+          # Limite de memória elevado para renders pesados de kustomize/helm.
           resources:
             requests:
               cpu: 50m
@@ -186,8 +174,7 @@ spec:
       containers:
         - name: argocd-application-controller
           imagePullPolicy: Always
-          # 1Gi->2Gi->2.5Gi: OOMKilled recorrente (137) conforme o nº de apps cresce.
-          # Combinar com processors reduzidos (argocd-cmd-params-cm) baixa o pico.
+          # Limite de memória dimensionado para o número de apps.
           resources:
             requests:
               cpu: 100m

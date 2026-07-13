@@ -28,7 +28,5 @@ spec:
         factor: 2
         maxDuration: 3m
 
-# TODO (este arquivo):
-# - Quando houver ambiente prod, criar outro Application para `k8s/overlays/prod`
-# - Substituir segredo placeholder do repo por mecanismo seguro (SOPS/SealedSecrets/ExternalSecrets)
+# TODO: criar Application de prod e usar segredos seguros.
 

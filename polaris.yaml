@@ -1,13 +1,4 @@
-# Polaris config pro deploy-argocd. Auto-detectado pela action `polaris`
-# do org-ci-platform via $GITHUB_WORKSPACE/polaris.yaml.
-#
-# Filosofia: Polaris vem com checks production-grade pra clusters
-# multi-node. Checks abaixo nao aplicam ao homelab single-node WSL OU
-# sao decisoes conscientes de scope — desativados aqui pra reduzir
-# ruido sem comprometer findings de security/reliability reais.
-#
-# Per-resource exemptions (RBAC danger findings) ficam em
-# bootstrap/argocd/polaris-rbac-exempt-patch.yaml via annotation.
+# Polaris config para o deploy do Argo CD.
 
 checks:
   # --- Out-of-scope: homelab single-node WSL ---

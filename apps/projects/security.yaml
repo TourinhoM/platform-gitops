@@ -19,11 +19,7 @@ spec:
       server: https://kubernetes.default.svc
     - namespace: trivy-system
       server: https://kubernetes.default.svc
-  # Cluster-scoped enumerado do conteúdo real + render dos charts vault/dtrack:
-  #   Namespace          — dtrack/base/namespace.yaml + CreateNamespace=true
-  #   ClusterRole/Binding — chart do Vault + sbom-sync do dtrack
-  #   ClusterPolicy       — kyverno-config (x3)
-  #   MutatingWebhook     — injector do Vault (desligado hoje; margem de segurança)
+  # clusterResourceWhitelist enumerado: Namespace, ClusterRole/Binding, ClusterPolicy, MutatingWebhook.
   clusterResourceWhitelist:
     - group: ""
       kind: Namespace

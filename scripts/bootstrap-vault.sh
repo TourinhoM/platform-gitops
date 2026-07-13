@@ -1,16 +1,5 @@
 #!/usr/bin/env bash
-# Bootstrap completo do Vault após cluster limpo:
-#   1. Aguarda pod do Vault
-#   2. vault operator init (1 key share / 1 threshold)
-#   3. Cria Secret vault-unseal-key (usado pelo postStart hook)
-#   4. Unseal
-#   5. Cria Secret vault-bootstrap-token e reinicia o Job de bootstrap
-#      (habilita KV v2, Kubernetes auth, policies eso-read e crossplane-write, roles)
-#   6. Cria todos os secrets de aplicação em secret/cluster/*
-#
-# Idempotente: detecta se o Vault já está inicializado e pula as etapas concluídas.
-#
-# Pré-requisitos: kubectl (ou k3s kubectl), jq
+# Bootstrap idempotente do Vault: init, unseal, Job de bootstrap e secrets de aplicação.
 set -euo pipefail
 
 KUBECTL="${KUBECTL:-sudo k3s kubectl}"
@@ -33,7 +22,7 @@ for i in $(seq 1 60); do
   sleep 5
 done
 [[ -z "${VAULT_POD:-}" ]] && { echo "Pod do Vault não encontrado. Abortando." >&2; exit 1; }
-# Espera Running (não Ready) — readiness probe só passa após init+unseal
+# Espera Running (não Ready)
 for i in $(seq 1 60); do
   STATUS=$($KUBECTL get pod "$VAULT_POD" -n vault -o jsonpath='{.status.phase}' 2>/dev/null || true)
   [[ "$STATUS" == "Running" ]] && break
@@ -80,7 +69,7 @@ else
   $KUBECTL delete job vault-bootstrap -n vault --ignore-not-found
 
   if [[ -n "$PLATFORM_SECURITY_PATH" && -d "$PLATFORM_SECURITY_PATH/vault" ]]; then
-    # Aplica apenas os recursos de bootstrap — Certificate e Ingress são gerenciados pelo ArgoCD
+    # Aplica apenas os recursos de bootstrap
     $KUBECTL apply -f "$PLATFORM_SECURITY_PATH/vault/configmap-bootstrap.yaml"
     $KUBECTL apply -f "$PLATFORM_SECURITY_PATH/vault/job-bootstrap.yaml"
   else

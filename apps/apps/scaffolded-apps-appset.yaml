@@ -7,10 +7,7 @@ spec:
   goTemplate: true
   goTemplateOptions: ["missingkey=error"]
   generators:
-    # MATRIX: cada repo gitops-<app> (scmProvider varre a org) × cada overlay
-    # (git directories sobre overlays/*). Produz 1 Application por (app, env) —
-    # <app>-<env>, cada um no seu namespace no cluster. Conta pessoal (TourinhoM)
-    # daria 404 no scmProvider; por isso as apps nascem na org tourinho-labs.
+    # Matrix: 1 Application por (repo gitops-<app>, overlay) → <app>-<env>.
     - matrix:
         generators:
           - scmProvider:
@@ -23,8 +20,7 @@ spec:
                   secretName: github-scm-token
                   key: token
               filters:
-                # repo gitops-* E multi-ambiente (tem overlays/) — guarda contra
-                # repo flat antigo/incompleto que não renderiza.
+                # Filtra repos gitops-* com overlays/.
                 - repositoryMatch: ^gitops-
                   pathsExist: [overlays]
           # repoURL/revision vêm dos params do scmProvider (matrix passa adiante).
@@ -35,23 +31,20 @@ spec:
                 - path: overlays/*
   template:
     metadata:
-      # <app>-<env>: app sem o prefixo gitops-, env = basename do overlay. Casa
-      # com a anotação argocd/app-name do catalog-info (plugin ArgoCD do Backstage).
+      # <app>-<env>: app sem prefixo gitops-, env = basename do overlay.
       name: "{{ trimPrefix \"gitops-\" .repository }}-{{ .path.basename }}"
     spec:
       project: scaffolded-apps
       source:
         repoURL: "{{ .url }}"
         targetRevision: "{{ .branch }}"
-        # overlays/<env> — não mais a raiz; cada App sincroniza um overlay.
+        # overlays/<env>: cada App sincroniza um overlay.
         path: "{{ .path.path }}"
       destination:
         server: https://kubernetes.default.svc
         # ns = <app>-<env>; a claim AppNamespace (em default) cria esse ns com a cerca.
         namespace: "{{ trimPrefix \"gitops-\" .repository }}-{{ .path.basename }}"
-      # HPA é dono de /spec/replicas quando autoscaling on — sem isto o selfHeal
-      # reverte a escala do HPA pro valor do git → OutOfSync piscando. Inócuo nas
-      # apps sem HPA (replicas não sofre drift). (Reloader morreu no A6.)
+      # Ignora /spec/replicas (gerenciado pelo HPA).
       ignoreDifferences:
         - group: apps
           kind: Deployment

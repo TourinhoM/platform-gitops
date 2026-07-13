@@ -4,9 +4,7 @@ metadata:
   name: security-cert-manager-config
   namespace: argocd
   annotations:
-    # Wave 1 — depende dos CRDs do chart (wave 0) estarem prontos.
-    # Retry generoso porque CRDs podem demorar pra registrar; Argo
-    # repete ate Issuer/Certificate ficarem applyable.
+    # Wave 1: depois dos CRDs do chart (wave 0).
     argocd.argoproj.io/sync-wave: "1"
 spec:
   project: system
@@ -18,9 +16,7 @@ spec:
 
   destination:
     server: https://kubernetes.default.svc
-    # ClusterIssuer e cluster-scoped; o `lab-ca` Certificate vive em
-    # `cert-manager` ns. Workload Certificates declaram namespace
-    # proprio no metadata, Argo respeita.
+    # ClusterIssuer é cluster-scoped; workloads declaram namespace próprio.
     namespace: cert-manager
 
   syncPolicy:

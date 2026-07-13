@@ -4,8 +4,7 @@ metadata:
   name: security-trivy-operator
   namespace: argocd
   annotations:
-    # Wave 0 = chart + CRDs primeiro; PrometheusRule do
-    # deploy-trivy-operator vem em wave 1.
+    # Wave 0: chart e CRDs primeiro.
     argocd.argoproj.io/sync-wave: "0"
 spec:
   project: system
@@ -16,9 +15,7 @@ spec:
     targetRevision: 0.30.0
     helm:
       values: |
-        # Scanners habilitados — cobertura focada, sem ruido excessivo
-        # do cluster compliance / infra assessment (ver ARCHITECTURE
-        # do deploy-trivy-operator pra rationale).
+        # Scanners habilitados.
         operator:
           vulnerabilityScannerEnabled: true
           exposedSecretScannerEnabled: true
@@ -27,14 +24,11 @@ spec:
           infraAssessmentScannerEnabled: false
           clusterComplianceEnabled: false
 
-          # Limites pra evitar saturar WSL single-node
+          # Limites de concorrência dos scan jobs.
           scanJobsConcurrentLimit: 2
           scanJobsRetryDelay: 30s
 
-          # Namespaces que NAO devem ser escaneados:
-          #   kube-system: imagens da distro k3s, fora do escopo
-          #   cert-manager: imagens Jetstack upstream
-          #   trivy-system: meta (escanear o scanner geraria loop)
+          # Namespaces excluídos do scan.
           excludeNamespaces: "kube-system,cert-manager,trivy-system"
 
           # Resources do controller no lab
@@ -48,8 +42,7 @@ spec:
           # Niveis reportados (alem do filtro do PrometheusRule abaixo)
           severity: "HIGH,CRITICAL"
 
-          # Source de DB (default OCI registry). resourceTimeout do
-          # primeiro pull pode demorar em rede ruim
+          # Timeout do pull do DB.
           timeout: "10m0s"
 
         # ServiceMonitor pra kube-prometheus-stack scrapar metrics

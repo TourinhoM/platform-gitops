@@ -1,10 +1,7 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
-# Plano:
-# - Definir namespaces do ambiente
-# - Incluir “infra” (Postgres/Keycloak/Ingress/etc)
-# - Aplicar patches e labels comuns via `lib/kustomize/*`
+# TODO: definir namespaces, infra e patches/labels comuns.
 
 resources:
   - namespaces/infra.yaml
