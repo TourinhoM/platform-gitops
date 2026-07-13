@@ -32,6 +32,8 @@ spec:
     metadata:
       # <app>-<env>: env = nome do arquivo sem ".image.yaml".
       name: "{{ trimPrefix \"gitops-\" .repository }}-{{ trimSuffix \".image.yaml\" .path.filename }}"
+      labels:
+        app: "{{ trimPrefix \"gitops-\" .repository }}"
     spec:
       project: scaffolded-apps
       source:
@@ -98,6 +100,8 @@ spec:
   template:
     metadata:
       name: "{{ trimPrefix \"gitops-\" .repository }}-kargo"
+      labels:
+        app: "{{ trimPrefix \"gitops-\" .repository }}"
     spec:
       project: scaffolded-apps
       source:

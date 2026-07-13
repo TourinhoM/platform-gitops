@@ -33,6 +33,8 @@ spec:
     metadata:
       # <app>-<env>: app sem prefixo gitops-, env = basename do overlay.
       name: "{{ trimPrefix \"gitops-\" .repository }}-{{ .path.basename }}"
+      labels:
+        app: "{{ trimPrefix \"gitops-\" .repository }}"
     spec:
       project: scaffolded-apps
       source:
