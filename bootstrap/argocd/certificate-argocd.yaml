@@ -1,0 +1,19 @@
+# Cert TLS da UI do Argo CD (argocd.local), emitido pelo ca-issuer.
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: argocd-server-tls
+  namespace: argocd
+spec:
+  secretName: argocd-server-tls
+  duration: 2160h
+  renewBefore: 360h
+  privateKey:
+    algorithm: ECDSA
+    size: 256
+    rotationPolicy: Always
+  dnsNames:
+    - argocd.local
+  issuerRef:
+    name: ca-issuer
+    kind: ClusterIssuer
