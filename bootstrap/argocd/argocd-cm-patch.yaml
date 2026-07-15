@@ -4,6 +4,13 @@ kind: ConfigMap
 metadata:
   name: argocd-cm
 data:
+  url: https://argocd.local
+  oidc.config: |
+    name: Keycloak
+    issuer: https://keycloak.local/keycloak/realms/kubernetes
+    clientID: argocd
+    clientSecret: $argocd-oidc-secret:oidc.keycloak.clientSecret
+    requestedScopes: ["openid", "profile", "email", "groups"]
   resource.customizations.ignoreDifferences.apps_Deployment: |
     managedFieldsManagers:
       - kyverno
