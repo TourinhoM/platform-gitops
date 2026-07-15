@@ -1,0 +1,42 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: security-trust-manager
+  namespace: argocd
+  annotations:
+    # Wave 1: depois do controller/CRDs do cert-manager (wave 0).
+    argocd.argoproj.io/sync-wave: "1"
+spec:
+  project: system
+
+  source:
+    repoURL: https://charts.jetstack.io
+    chart: trust-manager
+    targetRevision: v0.22.1
+    helm:
+      values: |
+        # RBAC padrao do chart pro recurso "secrets" e' um Role
+        # namespaced (nao ClusterRole), escopado a app.trust.namespace.
+        # Explicito aqui mesmo sendo o default do chart.
+        app:
+          trust:
+            namespace: cert-manager
+        resources:
+          requests:
+            cpu: 10m
+            memory: 32Mi
+          limits:
+            cpu: 100m
+            memory: 128Mi
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: cert-manager
+
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true

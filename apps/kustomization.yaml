@@ -14,6 +14,7 @@ resources:
   - projects/app-of-apps.yaml
   - security-cert-manager-app.yaml
   - security-cert-manager-config-app.yaml
+  - security-trust-manager-app.yaml
   - system-app.yaml
   - monitoring-app.yaml
   - platform-app.yaml

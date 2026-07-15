@@ -11,6 +11,18 @@ data:
     clientID: argocd
     clientSecret: $argocd-oidc-secret:oidc.keycloak.clientSecret
     requestedScopes: ["openid", "profile", "email", "groups"]
+    rootCA: |
+      -----BEGIN CERTIFICATE-----
+      MIIBfjCCASSgAwIBAgIQZnaszr48Uivmv8GBw9NyWjAKBggqhkjOPQQDAjAfMR0w
+      GwYDVQQDExRsYWItY2EuaG9tZWxhYi5sb2NhbDAeFw0yNjA3MDcxNzQ2MzlaFw0z
+      NjA3MDQxNzQ2MzlaMB8xHTAbBgNVBAMTFGxhYi1jYS5ob21lbGFiLmxvY2FsMFkw
+      EwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEe+FGrOYlL2f4GysyfUWE7CJhNE9KNzOt
+      C29SaKlTu+NZoyB4ltUy0VPvMobvUuyxmhSfG9DJUGDgXvNlyb/4v6NCMEAwDgYD
+      VR0PAQH/BAQDAgKkMA8GA1UdEwEB/wQFMAMBAf8wHQYDVR0OBBYEFNJ+4YBx/1cd
+      9A2aGhMliFdAkZBEMAoGCCqGSM49BAMCA0gAMEUCIQC428nhtqCh8Vyjq8wVqxdR
+      punvlw7vLy/h34SCxRIsZgIgFXzriye4Uf/ZkiuQqW4BvEkdLjBuLRNmWVkSKPs5
+      2R8=
+      -----END CERTIFICATE-----
   resource.customizations.ignoreDifferences.apps_Deployment: |
     managedFieldsManagers:
       - kyverno
