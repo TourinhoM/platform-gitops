@@ -5,6 +5,10 @@ metadata:
   name: argocd-cm
 data:
   url: https://argocd.local
+  # Conta local de serviço p/ o Backstage ler status de Application via API
+  # (token gerado por bootstrap/argocd/job-backstage-account-token.yaml, sem
+  # senha — não faz login na UI).
+  accounts.backstage: apiKey
   oidc.config: |
     name: Keycloak
     issuer: https://keycloak.local/keycloak/realms/kubernetes

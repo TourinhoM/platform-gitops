@@ -15,7 +15,18 @@ Repositório GitOps para gerenciar **Argo CD** e os **workloads** do cluster via
 2. Aplicar uma vez o root app: `bootstrap/root-app/application.yaml`
 3. A partir daí, o Argo CD reconcilia `apps/` e tudo que eles apontarem em `envs/`
 
-## Pré-requisito: HashiCorp Vault
+## Quickstart (onboarding completo)
+
+```bash
+kubectl apply -k bootstrap/argocd
+kubectl apply -f bootstrap/root-app/application.yaml
+```
+
+Após o ArgoCD sincronizar, siga o **Vault** abaixo para inicializar o backend de secrets.
+A partir daí o cluster é GitOps puro — qualquer novo ExternalSecret vai para
+o Vault via `platform-security` e é materializado pelo ESO automaticamente.
+
+## HashiCorp Vault
 
 O cluster usa HashiCorp Vault self-hosted (namespace `vault`, gerenciado por
 `platform-security`) como backend de secrets. O ESO autentica via Kubernetes auth
@@ -71,16 +82,32 @@ Validar:
 kubectl get job vault-bootstrap -n vault   # COMPLETIONS: 1/1
 ```
 
-## Quickstart (onboarding completo)
+### Segredos pós-bootstrap
 
-```bash
-kubectl apply -k bootstrap/argocd
-kubectl apply -f bootstrap/root-app/application.yaml
-```
+O Job `vault-bootstrap` (`platform-security/vault/configmap-bootstrap.yaml`) gera sozinho as senhas
+internas (`genpass`) de grafana, postgresql, keycloak e kargo, e cria os paths `cluster/argocd` e
+`cluster/dtrack#admin_password` como placeholder pros sync Jobs abaixo preencherem.
 
-Após o ArgoCD sincronizar, siga o **Bootstrap** acima para inicializar o Vault.
-A partir daí o cluster é GitOps puro — qualquer novo ExternalSecret vai para
-o Vault via `platform-security` e é materializado pelo ESO automaticamente.
+**Automatizados** — cada um roda como um Job (mesmo padrão do `vault-bootstrap`: login no Vault via
+Kubernetes auth, `vault kv patch`), disparado pelo próprio ArgoCD depois que a peça de origem existe.
+Não precisam de intervenção manual, só de tempo pro cluster convergir:
+
+| Vault path | Property | Job | De onde vem |
+|---|---|---|---|
+| `cluster/argocd` / `cluster/grafana` | `oidc_client_secret` | `platform-auth/base/job-oidc-secret-sync.yaml` | Client-secret gerado pelo próprio Keycloak ao criar os clients `argocd`/`grafana` (Admin REST API) |
+| `cluster/backstage` | `argocd_auth_token` | `platform-gitops/cluster-config/argocd/job-backstage-account-token.yaml` | Token da conta local `backstage` (capability `apiKey`, RBAC só-leitura) criada no ArgoCD — não é mais a senha do `admin` |
+| `cluster/dtrack` | `api_key` | `platform-security/dtrack/base/job-apikey-sync.yaml` | API key do time `Administrators` do Dependency-Track, após trocar a senha padrão `admin`/`admin` pela gerada em `cluster/dtrack#admin_password` |
+
+Se algum desses Jobs já rodou (`Completed`) antes de a peça de origem existir e falhou, ele não
+reexecuta sozinho — Jobs são imutáveis. Delete o Job (`kubectl delete job <nome> -n <ns>`) pra deixar
+o ArgoCD recriá-lo no próximo sync.
+
+**Ainda manuais** — vêm de uma identidade humana no GitHub, sem API viável pra criação desassistida:
+
+| Vault path | Property | De onde vem | Comando |
+|---|---|---|---|
+| `cluster/backstage` | `github_token` | Personal Access Token do GitHub (scopes `repo`, `read:org`) pro catalog/scaffolder do Backstage | `vault kv patch secret/cluster/backstage github_token=<valor>` |
+| `cluster/backstage` | `github_client_id` / `github_client_secret` | OAuth App do GitHub (Settings → Developer settings → OAuth Apps) pro login do Backstage | `vault kv patch secret/cluster/backstage github_client_id=<id> github_client_secret=<secret>` |
 
 ## Lint / validação CI
 

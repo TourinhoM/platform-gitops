@@ -1,0 +1,94 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: argocd-backstage-token-sync
+  namespace: argocd
+spec:
+  backoffLimit: 2
+  ttlSecondsAfterFinished: 86400
+  template:
+    spec:
+      serviceAccountName: argocd-backstage-token-sync
+      restartPolicy: Never
+      securityContext:
+        runAsNonRoot: false
+      containers:
+        - name: sync
+          image: hashicorp/vault:1.17.0
+          command:
+            - /bin/sh
+            - -c
+            - |
+              set -eu
+              apk add --no-cache curl jq >/dev/null 2>&1
+
+              export VAULT_ADDR="http://security-vault.vault.svc.cluster.local:8200"
+              ARGOCD="http://argocd-server.argocd.svc.cluster.local"
+              KUBE="https://kubernetes.default.svc"
+              KUBE_TOKEN_FILE=/var/run/secrets/kubernetes.io/serviceaccount/token
+              KUBE_CA=/var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+
+              echo "=== Login no Vault (kubernetes auth) ==="
+              VAULT_TOKEN=""
+              for i in $(seq 1 30); do
+                VAULT_TOKEN=$(vault write -field=token auth/kubernetes/login \
+                  role=argocd-backstage-token-sync jwt=@$KUBE_TOKEN_FILE 2>/dev/null) && [ -n "$VAULT_TOKEN" ] && break
+                sleep 10
+              done
+              [ -n "$VAULT_TOKEN" ] || { echo "Vault indisponível ou role argocd-backstage-token-sync ausente. Abortando." >&2; exit 1; }
+              export VAULT_TOKEN
+
+              existing=$(vault kv get -field=argocd_auth_token secret/cluster/backstage 2>/dev/null || true)
+              if [ -n "$existing" ]; then
+                echo "secret/cluster/backstage#argocd_auth_token já preenchido. Nada a fazer."
+                exit 0
+              fi
+
+              echo "=== Lendo argocd-initial-admin-secret (só existe uma vez, logo após o install) ==="
+              ADMIN_PW=$(curl -sf --cacert "$KUBE_CA" \
+                  -H "Authorization: Bearer $(cat $KUBE_TOKEN_FILE)" \
+                  "$KUBE/api/v1/namespaces/argocd/secrets/argocd-initial-admin-secret" \
+                | jq -r '.data.password // empty' | base64 -d)
+              [ -n "$ADMIN_PW" ] || {
+                echo "argocd-initial-admin-secret ausente (já rotacionado?). Rode este Job logo após o bootstrap do ArgoCD." >&2
+                exit 1
+              }
+
+              echo "=== Login admin na API do ArgoCD ==="
+              SESSION_TOKEN=""
+              for i in $(seq 1 30); do
+                SESSION_TOKEN=$(curl -sf -X POST "$ARGOCD/api/v1/session" \
+                  -H "Content-Type: application/json" \
+                  -d "{\"username\":\"admin\",\"password\":$(printf '%s' "$ADMIN_PW" | jq -Rs .)}" \
+                  | jq -r '.token // empty') && [ -n "$SESSION_TOKEN" ] && break
+                sleep 10
+              done
+              [ -n "$SESSION_TOKEN" ] || { echo "ArgoCD indisponível ou admin.password divergente. Abortando." >&2; exit 1; }
+
+              echo "=== Limpando tokens antigos da conta backstage (idempotência) ==="
+              curl -sf "$ARGOCD/api/v1/account/backstage" \
+                  -H "Authorization: Bearer $SESSION_TOKEN" \
+                | jq -r '.tokens[]?.id' \
+                | while read -r tid; do
+                    [ -n "$tid" ] && curl -sf -X DELETE \
+                      "$ARGOCD/api/v1/account/backstage/token/$tid" \
+                      -H "Authorization: Bearer $SESSION_TOKEN" >/dev/null
+                  done
+
+              echo "=== Gerando token da conta backstage ==="
+              NEW_TOKEN=$(curl -sf -X POST "$ARGOCD/api/v1/account/backstage/token" \
+                  -H "Authorization: Bearer $SESSION_TOKEN" \
+                  -H "Content-Type: application/json" \
+                  -d '{}' \
+                | jq -r '.token // empty')
+              [ -n "$NEW_TOKEN" ] || { echo "Falha ao gerar token (conta 'backstage' existe em accounts.backstage no argocd-cm?)." >&2; exit 1; }
+
+              vault kv patch secret/cluster/backstage argocd_auth_token="$NEW_TOKEN"
+              echo "secret/cluster/backstage#argocd_auth_token atualizado."
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 100m
+              memory: 128Mi

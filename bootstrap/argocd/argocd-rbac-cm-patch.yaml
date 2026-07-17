@@ -7,4 +7,7 @@ data:
   policy.csv: |
     g, argocd-admins, role:admin
     g, argocd-viewers, role:readonly
+    # Conta local backstage (accounts.backstage em argocd-cm): só leitura de Application,
+    # é o que o plugin ArgoCD do Backstage precisa pra status/health na UI.
+    p, backstage, applications, get, */*, allow
   scopes: '[groups]'

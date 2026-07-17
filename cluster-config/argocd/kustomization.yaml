@@ -4,3 +4,5 @@ namespace: argocd
 resources:
   - servicemonitors.yaml
   - externalsecret-github-scm.yaml
+  - serviceaccount-backstage-token-sync.yaml
+  - job-backstage-account-token.yaml
