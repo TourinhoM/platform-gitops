@@ -76,6 +76,14 @@ O cluster usa HashiCorp Vault self-hosted (namespace `vault`, gerenciado por
    O Job configura Kubernetes auth, policies (eso-read, crossplane-write) e
    roles, depois revoga o token de bootstrap automaticamente.
 
+   > O bloco de secrets de aplicação (`vault kv put` de postgresql, keycloak,
+   > grafana, dtrack, backstage, kargo) é idempotente por path — se o token de
+   > bootstrap expirar/for revogado e o Job precisar reexecutar (recriando-o
+   > manualmente), ele **não** re-gera senhas de paths que já existem. Fazer
+   > isso sem essa guarda rotaciona a senha no Vault sem rotacionar no serviço
+   > com estado real (ex.: Postgres), quebrando autenticação até alguém
+   > alinhar o valor manualmente nos dois lados.
+
 Validar:
 
 ```bash
