@@ -113,6 +113,21 @@ spec:
       destination:
         server: https://kubernetes.default.svc
         namespace: "{{ trimPrefix \"gitops-\" .repository }}"
+      # Campos que o webhook do ESO / controller do Kargo preenchem com
+      # defaults que o git não declara — sem isso fica OutOfSync pra sempre.
+      ignoreDifferences:
+        - group: external-secrets.io
+          kind: ExternalSecret
+          jqPathExpressions:
+            - '.spec.data[].remoteRef.conversionStrategy'
+            - '.spec.data[].remoteRef.decodingStrategy'
+            - '.spec.data[].remoteRef.metadataPolicy'
+            - '.spec.data[].remoteRef.nullBytePolicy'
+            - '.spec.target.deletionPolicy'
+        - group: kargo.akuity.io
+          kind: Stage
+          jqPathExpressions:
+            - '.spec.requestedFreight[].sources.requiredSoakTime'
       syncPolicy:
         automated:
           prune: true
@@ -120,6 +135,7 @@ spec:
         syncOptions:
           - CreateNamespace=true
           - ServerSideApply=true   # CRDs grandes do Kargo (Stage/Warehouse)
+          - RespectIgnoreDifferences=true
         managedNamespaceMetadata:
           labels:
             kargo.akuity.io/project: "true"
