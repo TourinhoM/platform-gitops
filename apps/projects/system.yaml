@@ -4,7 +4,7 @@ metadata:
   name: system
   namespace: argocd
 spec:
-  description: Substrato do cluster — Argo CD self-management, External Secrets, Keycloak Operator, cert-manager, Kyverno, policy-reporter, Trivy Operator
+  description: Substrato do cluster — Argo CD self-management, External Secrets, Keycloak Operator, cert-manager, Kyverno, policy-reporter, Trivy Operator, Traefik config
   # sourceRepos/destinations escopados aos apps de system.
   sourceRepos:
     - https://github.com/TourinhoM/platform-gitops       # argocd self/config, external-secrets-config
@@ -29,6 +29,8 @@ spec:
     - namespace: kyverno
       server: https://kubernetes.default.svc
     - namespace: policy-reporter
+      server: https://kubernetes.default.svc
+    - namespace: kube-system
       server: https://kubernetes.default.svc
   # Whitelist cluster-wide para os CRDs/ClusterRoles/webhooks dos operators.
   clusterResourceWhitelist:
