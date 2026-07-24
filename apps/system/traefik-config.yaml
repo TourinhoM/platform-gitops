@@ -1,0 +1,26 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: traefik-config
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+spec:
+  project: system
+  source:
+    repoURL: https://github.com/TourinhoM/platform-gitops
+    targetRevision: main
+    path: cluster-config/traefik
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: kube-system
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    retry:
+      limit: 15
+      backoff:
+        duration: 10s
+        factor: 2
+        maxDuration: 2m

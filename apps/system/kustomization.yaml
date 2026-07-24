@@ -10,3 +10,4 @@ resources:
   - security-kyverno-policies.yaml
   - security-policy-reporter.yaml
   - keycloak-operator.yaml
+  - traefik-config.yaml
